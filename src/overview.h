@@ -1,5 +1,6 @@
-
+#include <climits>
 #include <time.h>
+#include <cmath>
 #define UNUSED(a) (void)a
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) < (b) ? (b) : (a))

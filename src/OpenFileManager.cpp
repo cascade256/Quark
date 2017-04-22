@@ -10,7 +10,7 @@ void appendLine(TextBuffer* buffer, const TextLine* line) {
 		TextLine* oldLines = buffer->lines;
 		buffer->capacity += 10;
 		buffer->lines = new TextLine[buffer->capacity];
-		memcpy_s(buffer->lines, buffer->capacity * sizeof(TextLine), oldLines, buffer->len * sizeof(TextLine));
+		memcpy(buffer->lines, oldLines, buffer->len * sizeof(TextLine));
 		delete[] oldLines;
 	}
 	buffer->lines[buffer->len].text = new char[line->len];
@@ -19,8 +19,8 @@ void appendLine(TextBuffer* buffer, const TextLine* line) {
 	buffer->lines[buffer->len].colors = new char[line->numGlyphs];
 	buffer->lines[buffer->len].numGlyphs = line->numGlyphs;
 	buffer->lines[buffer->len].colorCapacity = line->numGlyphs;
-	memcpy_s(buffer->lines[buffer->len].text, line->len * sizeof(char), line->text, line->len * sizeof(char));
-	memcpy_s(buffer->lines[buffer->len].colors, line->numGlyphs * sizeof(char), line->colors, line->numGlyphs * sizeof(char));
+	memcpy(buffer->lines[buffer->len].text, line->text, line->len * sizeof(char));
+	memcpy(buffer->lines[buffer->len].colors, line->colors, line->numGlyphs * sizeof(char));
 	buffer->len++;
 }
 
@@ -30,14 +30,14 @@ void appendChar(TextLine* line, char c) {
 		char* oldText = line->text;
 		line->capacity = line->capacity * 2;
 		line->text = new char[line->capacity];
-		memcpy_s(line->text, line->len, oldText, line->len);
+		memcpy(line->text, oldText, line->len);
 		delete[] oldText;
 	}
 	if (line->colorCapacity == line->numGlyphs) {
 		char* oldColors = line->colors;
 		line->colorCapacity = line->colorCapacity * 2;
 		line->colors = new char[line->colorCapacity];
-		memcpy_s(line->colors, line->numGlyphs, oldColors, line->numGlyphs);
+		memcpy(line->colors, oldColors, line->numGlyphs);
 		delete[] oldColors;
 	}
 	line->text[line->len] = c;
@@ -47,6 +47,14 @@ void appendChar(TextLine* line, char c) {
 }
 
 void openFile(OpenFiles* files, const char* path) {
+	//Make sure the file is valid
+	FILE* file;
+	file = fopen(path, "r");
+	if(!file) {
+			printf("Failed to open the file: %s\n", path);
+			return;
+	}
+
 	//Expand the array by 1
 	MyOpenFile* oldFiles = files->openFiles;
 	int numOldFiles = files->len;
@@ -60,9 +68,6 @@ void openFile(OpenFiles* files, const char* path) {
 	delete[] oldFiles;
 
 	//Fill in the new file info
-	FILE* file;
-	fopen_s(&file, path, "r");
-	
 	TextBuffer buffer;
 	buffer.capacity = 10;
 	buffer.lines = new TextLine[buffer.capacity];
@@ -86,7 +91,7 @@ void openFile(OpenFiles* files, const char* path) {
 		else {
 			appendChar(&temp, c);
 		}
-		
+
 		c = fgetc(file);
 	}
 	appendLine(&buffer, &temp);
@@ -99,17 +104,19 @@ void openFile(OpenFiles* files, const char* path) {
 	openFile.edit.buffer = buffer;
 	int pathLen = strlen(path);
 	openFile.path = new char[pathLen + 1];
-	strcpy_s(openFile.path, pathLen + 1, path);
+	strncpy(openFile.path, path, pathLen + 1);
 	openFile.unsaved = false;
 
 	const char* fileName;
-#ifdef _WIN32
+#ifdef __WIN32__
 	fileName = &strrchr(path, '\\')[1];
+#else
+	fileName = &strrchr(path, '/')[1];
 #endif
 	int nameLen = strlen(fileName);
 	//Add two extra chars, a spot for a * to mark an unsaved file and the NULL byte
 	openFile.name = new char[nameLen + 2];
-	strcpy_s(openFile.name, nameLen + 1, fileName);
+	strncpy(openFile.name, fileName, nameLen + 1);
 	openFile.name[nameLen] = '\0';
 	openFile.name[nameLen + 1] = '\0';
 	openFile.nameLen = nameLen + 1;
@@ -133,7 +140,7 @@ void openFile(OpenFiles* files, const char* path) {
 	for (int i = 0; i < buffer.len; i++) {
 		assert(buffer.lines[i].len >= 0);
 	}
-	
+
 	const char* ext = &strrchr(fileName, '.')[1];
 	if (ext != NULL) {
 		//Setup the colorizer
@@ -146,6 +153,7 @@ void openFile(OpenFiles* files, const char* path) {
 		}
 		else {
 			openFile.edit.colorize = NULL;
+			printf("No colorizer found\n");
 		}
 
 		//Setup the autocompleter
@@ -162,6 +170,7 @@ void openFile(OpenFiles* files, const char* path) {
 		}
 		else {
 			openFile.edit.autocomplete = NULL;
+			openFile.edit.acActive = false;
 		}
 	}
 
@@ -182,7 +191,7 @@ void saveFile(MyOpenFile* file) {
 	assert(false);
 	return;
 	FILE* f;
-	fopen_s(&f, file->path, "w");
+	f = fopen(file->path, "w");
 	if (f != NULL) {
 		TextBuffer buffer = file->edit.buffer;
 		for (int i = 0; i < buffer.len; i++) {
@@ -212,4 +221,3 @@ void destroyFiles(OpenFiles* files) {
 	}
 	delete[] files->openFiles;
 }
-

@@ -1,21 +1,26 @@
-#pragma comment(lib, "../../GLEW/glew-2.0.0/lib/Release/x64/glew32.lib")
-#pragma comment(lib, "../../glfw-3.2.1/glfw3.lib")
-#pragma comment(lib, "opengl32.lib")
+//#pragma comment(lib, "../../GLEW/glew-2.0.0/lib/Release/x64/glew32.lib")
+//#pragma comment(lib, "../../glfw-3.2.1/glfw3.lib")
+//#pragma comment(lib, "opengl32.lib")
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <string>
-#include "../../GLEW/glew-2.0.0/include/GL/glew.h"
+//#include "../../GLEW/glew-2.0.0/include/GL/glew.h"
+#include <epoxy/gl.h>
+#include <epoxy/glx.h>
 
 #define NK_IMPLEMENTATION
 #define NK_GLFW_GL3_IMPLEMENTATION
 #include "NuklearAndConfig.h"
-#include "../../nuklear/nuklear_glfw_gl3.h"
+#include "nuklear/nuklear_glfw_gl3.h"
 
+#ifdef __WIN32__
 #include "dirent.h"
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
+#else
+#include <dirent.h>
+#include <unistd.h>
+#endif
 
+#include <string.h>
 #include "overview.h"
 #include "FileTree.h"
 #include "OpenFileManager.h"
@@ -39,8 +44,8 @@ int main() {
 	g->win = glfwCreateWindow(1200, 800, "OdinEditor", NULL, NULL);
 	glfwMakeContextCurrent(g->win);
 	glViewport(0, 0, 1200, 800);
-	glewExperimental = 1;
-	glewInit();
+//	glewExperimental = 1;
+//	glewInit();
 	g->ctx = nk_glfw3_init(g->win, NK_GLFW3_INSTALL_CALLBACKS, keyHandler);
 	nk_font_atlas* atlas;
 	nk_font* font;
@@ -69,9 +74,13 @@ int main() {
 
 	FileTreeItem fileTree;
 	char* path = new char[1024];
-#ifdef WIN32
+#ifdef __WIN32__
 	GetCurrentDirectory(1024, path);
+#else
+		getcwd(path, 1024);
 #endif
+	printf("Path: %s\n", path);
+	strcat(path, "/..");
 	createFileTree(path, &fileTree);
 	delete[] path;
 
@@ -88,6 +97,7 @@ int main() {
 	//openFile(&g->files, "x:\\NewProjects\\OdinEditor2\\OdinEditor\\OdinEditor\\cura_app.py");
 	//openFile(&g->files, "x:\\NewProjects\\OdinEditor2\\sample.py");
 	openFile(&g->files, "x:\\NewProjects\\OdinEditor2\\FileTree.h");
+	openFile(&g->files, "~/test.h");
 
 	g->ctx->style.edit.selected_normal.a = 200;
 	g->ctx->style.edit.selected_normal.b = 200;
@@ -102,11 +112,11 @@ int main() {
 		int width;
 		int height;
 		glfwGetWindowSize(g->win, &width, &height);
-		
-		
-		if (nk_begin(g->ctx, "Demo", nk_rect(0, 0, width, height), 
+
+
+		if (nk_begin(g->ctx, "Demo", nk_rect(0, 0, width, height),
 			NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR)) {
-			
+
 			int windowHeaderHeight = 30;
 			//Menu bar
 			int menuBarHeight = 25;
@@ -121,7 +131,7 @@ int main() {
 				nk_menu_end(g->ctx);
 			}
 			nk_menubar_end(g->ctx);
-			
+
 			struct nk_rect region = nk_window_get_content_region(g->ctx);
 			float ratio = 0.2f;
 			nk_label(g->ctx, "Default", NK_TEXT_LEFT);
@@ -155,12 +165,12 @@ int main() {
 				}
 			}
 
-			
+
 			drawTextEditor(g->ctx, &g->files);
 		}
 		nk_end(g->ctx);
-		
-		
+
+
 		//overview(g->ctx);
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -168,7 +178,7 @@ int main() {
 		nk_glfw3_render(NK_ANTI_ALIASING_ON, 512 * 1024, 128 * 1024);
 		glfwSwapBuffers(g->win);
 	}
-	
+
 	delete[] mem;
 	delete[] g->theme;
 	destroyFileTree(&fileTree);
@@ -176,7 +186,7 @@ int main() {
 	destroyPlugins();
 	nk_glfw3_shutdown();
 	glfwTerminate();
-	_CrtDumpMemoryLeaks();
+//	_CrtDumpMemoryLeaks();
 	return 0;
 }
 

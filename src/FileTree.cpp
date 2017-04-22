@@ -1,18 +1,24 @@
 #include "FileTree.h"
+#ifdef __WIN32__
 #include "dirent.h"
-
+#else
+#include <dirent.h>
+#endif
 void createFileTree(const char* path, FileTreeItem* tree) {
+	printf("Creating file tree: %s\n", path);
 	int pathLen = strlen(path);
 	tree->path = new char[pathLen + 1];
-	strcpy_s(tree->path, pathLen + 1, path);
+	strncpy(tree->path, path, pathLen + 1);
 
 	const char* dirName;
-#ifdef _WIN32
+#ifdef __WIN32__
 	dirName = &strrchr(tree->path, '\\')[1];
+#else
+	dirName = &strrchr(tree->path, '/')[1];
 #endif
 	int nameLen = strlen(dirName);
 	tree->name = new char[nameLen + 1];
-	strcpy_s(tree->name, nameLen + 1, dirName);
+	strncpy(tree->name, dirName, nameLen + 1);
 
 	tree->loaded = false;
 	tree->selected = false;
@@ -55,15 +61,24 @@ void extendFileTree(FileTreeItem* tree) {
 	for (int i = 0; i < numItems; i++) {
 		subItems[i].type = ent->d_type;
 
-		subItems[i].name = new char[ent->d_namlen + 1];
-		strcpy_s(subItems[i].name, ent->d_namlen + 1, ent->d_name);
+		subItems[i].name = new char[strlen(ent->d_name) + 1];
+		strcpy(subItems[i].name, ent->d_name);
 
-#ifdef _WIN32
+#ifdef __WIN32__
 		int itemPathLen = ent->d_namlen + pathLen + 2;//Add 2, one for the null byte, and one for the backslash
+		//TODO add bounds checking
 		subItems[i].path = new char[itemPathLen];
-		strcpy_s(subItems[i].path, itemPathLen, tree->path);
-		strcat_s(subItems[i].path, itemPathLen, "\\");
-		strcat_s(subItems[i].path, itemPathLen, ent->d_name);
+		strcpy(subItems[i].path, tree->path);
+		strcat(subItems[i].path, "\\");
+		strcat(subItems[i].path, ent->d_name);
+
+#else
+		int itemPathLen = strlen(ent->d_name) + pathLen + 2;//Add 2, one for the null byte, and one for the backslash
+		//TODO add bounds checking
+		subItems[i].path = new char[itemPathLen];
+		strcpy(subItems[i].path, tree->path);
+		strcat(subItems[i].path, "/");
+		strcat(subItems[i].path, ent->d_name);
 #endif
 
 		subItems[i].subItemCount = 0;

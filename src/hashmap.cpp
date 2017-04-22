@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
 #define INITIAL_SIZE (256)
 #define MAX_CHAIN_LENGTH (8)
 
@@ -278,7 +277,7 @@ int hashmap_put(map_t in, const char* key, any_t value) {
 	m->data[index].data = value;
 	int keyLen = strlen(key);
 	m->data[index].key = new char[keyLen + 1];
-	strcpy_s(m->data[index].key, keyLen + 1, key);
+	strcpy(m->data[index].key, key);
 	m->data[index].in_use = 1;
 	m->size++;
 

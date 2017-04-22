@@ -6,11 +6,11 @@ Plugin_API api;
 std::vector<Plugin>* plugins;
 
 void registerColorizer(Colorize_Func func, const char* fileExt) {
-	hashmap_put(g->colorizers, fileExt, func);
+	hashmap_put(g->colorizers, fileExt, (void*)func);
 }
 
 void registerAutocompleter(AutoComplete_Func func, const char* fileExt) {
-	hashmap_put(g->autocompleters, fileExt, func);
+	hashmap_put(g->autocompleters, fileExt, (void*)func);
 }
 
 bool loadPlugin(const char* path, Plugin* plugin) {
@@ -22,7 +22,7 @@ bool loadPlugin(const char* path, Plugin* plugin) {
 		printf("Failed to load the plugin\n");
 		return false;
 	}
-	
+
 	plugin->getPluginInfo = (type_getPluginInfo)GetProcAddress(dll, "getPluginInfo");
 	if (plugin->getPluginInfo == NULL) {
 		return false;
@@ -35,7 +35,25 @@ bool loadPlugin(const char* path, Plugin* plugin) {
 	if (plugin->destroyPlugin == NULL) {
 		return false;
 	}
-	
+#else
+	void* dll = dlopen(path, RTLD_NOW);
+	if (!dll) {
+		printf("Failed to load the plugin\n");
+		return false;
+	}
+
+	plugin->getPluginInfo = (type_getPluginInfo)dlsym(dll, "getPluginInfo");
+	if (plugin->getPluginInfo == NULL) {
+		return false;
+	}
+	plugin->initPlugin = (type_initPlugin)dlsym(dll, "initPlugin");
+	if (plugin->initPlugin == NULL) {
+		return false;
+	}
+	plugin->destroyPlugin = (type_destroyPlugin)dlsym(dll, "destroyPlugin");
+	if (plugin->destroyPlugin == NULL) {
+		return false;
+	}
 #endif
 
 	return true;
@@ -53,11 +71,19 @@ void loadPlugins() {
 
 	char* pluginPath = new char[1024];
 
-#ifdef _WIN32
+#ifdef __WIN32__
 	GetModuleFileName(NULL, pluginPath, 1024);
 	char* fileName = strrchr(pluginPath, '\\');
-	strcpy_s(fileName, 1024 - (fileName - pluginPath), "\\plugins\\");
+	strncpy(fileName, "\\plugins\\",  1024 - (fileName - pluginPath));
+#elif __linux__
+	int len = readlink("/proc/self/exe", pluginPath, 1024);
+	pluginPath[len] = '\0';
+	char* fileName = strrchr(pluginPath, '/');
+	strncpy(fileName, "/plugins/", 1024 - (fileName - pluginPath));
+#else
+#error "Unsupported platform!"
 #endif
+
 
 	printf("Plugins path: %s\n", pluginPath);
 
@@ -77,8 +103,12 @@ void loadPlugins() {
 			ent = readdir(dir);
 			continue;
 		}
+#ifdef __WIN32__
 		if (strcmp(strrchr(ent->d_name, '.'), ".dll") == 0) {
-			strcpy_s(pluginNameLoc, maxPluginNameLen, ent->d_name);
+#else
+		if (strcmp(strrchr(ent->d_name, '.'), ".so") == 0) {
+#endif
+			strncpy(pluginNameLoc, ent->d_name, maxPluginNameLen);
 
 			if (loadPlugin(pluginPath, &plugin)) {
 				plugins->push_back(plugin);

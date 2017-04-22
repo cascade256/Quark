@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../nuklear/nuklear.h"
+#include "nuklear/nuklear.h"
 
 
 NK_API int nk_my_popup_begin(struct nk_context *ctx, nk_window* popup, enum nk_popup_type type, 

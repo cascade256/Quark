@@ -4,7 +4,7 @@ nk_window* popup;
 
 void drawAutocompleteDialog(struct nk_vec2 pos, AutoCompleteData* data, bool* active) {
 	nk_style* style = &g->ctx->style;
-	
+
 	float row_height = style->font->height + style->button.padding.y * 2;
 	struct nk_rect area = nk_rect(pos.x, pos.y, 200, data->numOptions * row_height + style->window.popup_padding.y * 2);
 

@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef __WIN32__
+#define __stdcall
+#endif
+
 struct AutoCompleteOption {
 	char* title;
 	char* desc;
@@ -19,6 +23,7 @@ enum TokenType {
 	TOK_COMMENT,
 	TOK_IDENTIFIER,
 	TOK_RESERVED,
+	TOK_NUMBER,
 	TOK_STRING
 };
 
@@ -82,5 +87,5 @@ struct Plugin {
 	type_getPluginInfo getPluginInfo;
 	type_initPlugin initPlugin;
 	type_destroyPlugin destroyPlugin;
-	
+
 };

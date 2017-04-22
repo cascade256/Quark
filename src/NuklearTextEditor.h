@@ -1,8 +1,8 @@
 #pragma once
 #include "PluginProtocol.h"
-#include "../../nuklear/nuklear.h"
-
-
+#include "nuklear/nuklear.h"
+#include <stdio.h>
+#include <string.h>
 struct nk_my_text_edit {
 	struct nk_my_clipboard clip;
 	struct TextBuffer buffer;

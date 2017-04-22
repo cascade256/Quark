@@ -1,7 +1,7 @@
 #pragma once
 #include "OpenFileManager.h"
 #include "NuklearAndConfig.h"
-#include "../../../OdinEditor2/nuklear/nuklear_glfw_gl3.h"
+#include "nuklear/nuklear_glfw_gl3.h"
 #include "hashmap.h"
 
 struct Global {
