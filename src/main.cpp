@@ -1,19 +1,14 @@
-//#pragma comment(lib, "../../GLEW/glew-2.0.0/lib/Release/x64/glew32.lib")
-//#pragma comment(lib, "../../glfw-3.2.1/glfw3.lib")
-//#pragma comment(lib, "opengl32.lib")
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <string>
-//#include "../../GLEW/glew-2.0.0/include/GL/glew.h"
-#include <epoxy/gl.h>
-#include <epoxy/glx.h>
+#include "gl3w.h"
 
 #define NK_IMPLEMENTATION
 #define NK_GLFW_GL3_IMPLEMENTATION
 #include "NuklearAndConfig.h"
 #include "nuklear/nuklear_glfw_gl3.h"
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #include "dirent.h"
 #else
 #include <dirent.h>
@@ -43,9 +38,12 @@ int main() {
 	glfwInit();
 	g->win = glfwCreateWindow(1200, 800, "OdinEditor", NULL, NULL);
 	glfwMakeContextCurrent(g->win);
+	gl3wInit();
+
 	glViewport(0, 0, 1200, 800);
 //	glewExperimental = 1;
 //	glewInit();
+
 	g->ctx = nk_glfw3_init(g->win, NK_GLFW3_INSTALL_CALLBACKS, keyHandler);
 	nk_font_atlas* atlas;
 	nk_font* font;
@@ -74,7 +72,7 @@ int main() {
 
 	FileTreeItem fileTree;
 	char* path = new char[1024];
-#ifdef __WIN32__
+#ifdef _WIN32
 	GetCurrentDirectory(1024, path);
 #else
 		getcwd(path, 1024);

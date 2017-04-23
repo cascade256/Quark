@@ -1,5 +1,5 @@
 #pragma once
-#ifdef __WIN32__
+#ifdef _WIN32
 #include <Windows.h>
 #include "dirent.h"
 #else

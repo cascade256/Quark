@@ -1,5 +1,5 @@
 #include "FileTree.h"
-#ifdef __WIN32__
+#ifdef _WIN32
 #include "dirent.h"
 #else
 #include <dirent.h>
@@ -11,7 +11,7 @@ void createFileTree(const char* path, FileTreeItem* tree) {
 	strncpy(tree->path, path, pathLen + 1);
 
 	const char* dirName;
-#ifdef __WIN32__
+#ifdef _WIN32
 	dirName = &strrchr(tree->path, '\\')[1];
 #else
 	dirName = &strrchr(tree->path, '/')[1];
@@ -64,7 +64,7 @@ void extendFileTree(FileTreeItem* tree) {
 		subItems[i].name = new char[strlen(ent->d_name) + 1];
 		strcpy(subItems[i].name, ent->d_name);
 
-#ifdef __WIN32__
+#ifdef _WIN32
 		int itemPathLen = ent->d_namlen + pathLen + 2;//Add 2, one for the null byte, and one for the backslash
 		//TODO add bounds checking
 		subItems[i].path = new char[itemPathLen];

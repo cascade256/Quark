@@ -108,7 +108,7 @@ void openFile(OpenFiles* files, const char* path) {
 	openFile.unsaved = false;
 
 	const char* fileName;
-#ifdef __WIN32__
+#ifdef _WIN32
 	fileName = &strrchr(path, '\\')[1];
 #else
 	fileName = &strrchr(path, '/')[1];

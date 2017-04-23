@@ -71,7 +71,7 @@ void loadPlugins() {
 
 	char* pluginPath = new char[1024];
 
-#ifdef __WIN32__
+#ifdef _WIN32
 	GetModuleFileName(NULL, pluginPath, 1024);
 	char* fileName = strrchr(pluginPath, '\\');
 	strncpy(fileName, "\\plugins\\",  1024 - (fileName - pluginPath));
@@ -103,7 +103,7 @@ void loadPlugins() {
 			ent = readdir(dir);
 			continue;
 		}
-#ifdef __WIN32__
+#ifdef _WIN32
 		if (strcmp(strrchr(ent->d_name, '.'), ".dll") == 0) {
 #else
 		if (strcmp(strrchr(ent->d_name, '.'), ".so") == 0) {

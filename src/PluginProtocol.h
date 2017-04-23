@@ -1,6 +1,6 @@
 #pragma once
 
-#ifndef __WIN32__
+#ifndef _WIN32
 #define __stdcall
 #endif
 
