@@ -1,6 +1,8 @@
 #include "../PluginProtocol.h"
 #include <string.h>
 #include <stdio.h>
+#include "keywords.h"
+
 extern "C" {
 
     int parseString(char* text, int start, int buffLen) {
@@ -14,8 +16,6 @@ extern "C" {
     bool isLetter(char c) {
         return ((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'));
     }
-
-
 
     bool isNumber(char c) {
         return (c >= '0') && (c <= '9');
@@ -62,7 +62,6 @@ extern "C" {
 
     void colorize(TextBuffer* buffer, int editedLine) {
         TextLine* line = &buffer->lines[editedLine];
-        printf("COlorize\n");
         int i = 0;
         while(i < line->len) {
             TokenType tok = TOK_DEFAULT;
@@ -77,7 +76,50 @@ extern "C" {
             }
             else if(isLetter(c)) {
                 i = parseIdentifier(line->text, i, line->len);
-                tok = TOK_IDENTIFIER;
+
+/*
+                for(int j = tokStart; j < i; j++) {
+                    if(line->text[j] == ' ') {
+                        putchar('!');
+                    }
+                    else {
+                        putchar(line->text[j]);
+                    }
+
+                }
+                */
+                putchar('\n');
+                //printf("NumKeywords: %i\n", (sizeof(keywords) / sizeof(char*)));
+                //printf("Keyword: %s\n", keywords[1]);
+                //Check to see if the identier is a keyword
+                bool isKeyword = true;
+                for(int j = 0; j < (sizeof(keywords) / sizeof(char*)); j++) {
+                    isKeyword = true;
+
+                    if(strlen(keywords[j]) != i - tokStart) {
+                        isKeyword = false;
+                        continue;
+                    }
+
+                    for(int k = tokStart; k < i; k++) {
+                        printf("%c == %c?\n", line->text[k], keywords[j][k - tokStart]);
+                        if(line->text[k] != keywords[j][k - tokStart]){
+                            isKeyword = false;
+                            break;
+                        }
+                    }
+                    if(isKeyword) {
+                        break;
+                    }
+                }
+                if(isKeyword) {
+                    tok = TOK_RESERVED;
+                    printf("Found a keyword!\n");
+                }
+                else {
+                    tok = TOK_IDENTIFIER;
+                }
+
             }
             else if(c == '\"') {
                 i = parseString(line->text, i, line->len);
