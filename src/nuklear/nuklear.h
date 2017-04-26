@@ -6573,7 +6573,7 @@ nk_draw_text(struct nk_command_buffer *b, struct nk_rect r,
 
 NK_API void
 nk_draw_colored_text(struct nk_command_buffer *b, struct nk_rect r,
-	const char *string, int stringLen, const char* color, int colorLen, const nk_color* colorTable, 
+	const char *string, int stringLen, const char* color, int colorLen, const nk_color* colorTable,
 	const struct nk_user_font *font, struct nk_color bg)
 {
 	float text_width = 0;
@@ -7774,7 +7774,7 @@ nk_draw_list_add_text(struct nk_draw_list *list, const struct nk_user_font *font
 
 NK_API void
 nk_draw_list_add_colored_text(struct nk_draw_list *list, const struct nk_user_font *font,
-	struct nk_rect rect, const char *text, int textLen, 
+	struct nk_rect rect, const char *text, int textLen,
 	const char* colors, int colorLen, const nk_color* colorTable, float font_height, nk_color bg)
 {
 	float x = 0;
@@ -7816,6 +7816,11 @@ nk_draw_list_add_colored_text(struct nk_draw_list *list, const struct nk_user_fo
 				(next == NK_UTF_INVALID) ? '\0' : next);
 			char_width = g.xadvance * NK_TAB_SIZE;
 		}
+        else if(unicode == '\n') {
+            font->query(font->userdata, font_height, &g, ' ',
+				(next == NK_UTF_INVALID) ? '\0' : next);
+			char_width = 0;
+        }
 		else {
 			font->query(font->userdata, font_height, &g, unicode,
 				(next == NK_UTF_INVALID) ? '\0' : next);

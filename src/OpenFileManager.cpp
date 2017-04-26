@@ -84,6 +84,7 @@ void openFile(OpenFiles* files, const char* path) {
 	char c = fgetc(file);
 	while (c != EOF) {
 		if (c == '\n') {
+			appendChar(&temp, c);
 			appendLine(&buffer, &temp);
 			temp.len = 0;
 			temp.numGlyphs = 0;
@@ -188,8 +189,8 @@ void openFile(OpenFiles* files, const char* path) {
 }
 
 void saveFile(MyOpenFile* file) {
-	assert(false);
-	return;
+	//assert(false);
+	//return;
 	FILE* f;
 	f = fopen(file->path, "w");
 	if (f != NULL) {

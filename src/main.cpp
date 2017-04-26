@@ -145,7 +145,7 @@ int main() {
 			nk_layout_row(g->ctx, NK_STATIC, region.h - 10, 3, row_layout);
 
 			//File explorer
-			if (nk_group_begin(g->ctx, "Files", NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER))
+			if (nk_group_begin(g->ctx, "Files", NK_WINDOW_BORDER))
 			{
 				drawFileTree(g->ctx, &fileTree, &g->files);
 				nk_group_end(g->ctx);

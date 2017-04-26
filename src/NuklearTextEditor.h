@@ -118,7 +118,7 @@ nk_my_text_editor(struct nk_context *ctx, nk_flags flags,
 	return ret_flags;
 }
 
-NK_INTERN void 
+NK_INTERN void
 nk_my_on_text_change(nk_my_text_edit* state) {
 	if (state->acActive) {
 		state->autocomplete(state->acData, &state->buffer);
@@ -126,7 +126,7 @@ nk_my_on_text_change(nk_my_text_edit* state) {
 	}
 }
 
-NK_INTERN float 
+NK_INTERN float
 nk_my_textedit_text_width(const TextLine* line, int start, int end, const nk_user_font* font) {
 	nk_rune unicode;
 
@@ -288,7 +288,7 @@ nk_my_textedit_redo(struct nk_my_text_edit *state)
 }
 #endif
 
-NK_INTERN int 
+NK_INTERN int
 nk_my_bytes_to_glyph(TextLine* line, int cursor) {
 	int glyph_len;
 	nk_rune unicode;
@@ -326,7 +326,7 @@ nk_my_textline_resize(struct TextLine* line, int newSize, int newNumGlyphs) {
 
 NK_INTERN void
 nk_my_textline_concat(struct TextLine* dest, struct TextLine* src) {
-	if (dest->len + src->len > dest->capacity || 
+	if (dest->len + src->len > dest->capacity ||
 		dest->numGlyphs + src->numGlyphs > dest->colorCapacity) {
 		nk_my_textline_resize(dest, dest->len + src->len, dest->numGlyphs + src->numGlyphs);
 	}
@@ -587,6 +587,22 @@ nk_my_textedit_text(struct nk_my_text_edit *state, const char *text, int total_l
 		if (unicode == 127)
 			break;
 
+		TextLine* line = &state->buffer.lines[state->cursor.x];
+		if (!NK_MY_TEXT_HAS_SELECTION(state))
+		{
+			if (state->mode == NK_TEXT_EDIT_MODE_REPLACE) {
+				//nk_textedit_makeundo_replace(state, state->cursor, 1, 1);
+				//TODO
+			}
+			nk_my_textedit_insert_glyph(line, &state->cursor, text + text_len, glyph_len);
+
+		}
+		else {
+			nk_my_textedit_delete_selection(state); /* implicitly clamps */
+			nk_my_textedit_insert_glyph(line, &state->cursor, text + text_len, glyph_len);
+			//nk_textedit_makeundo_insert(state, state->cursor, 1);
+		}
+
 		if (unicode == '\n') {
 			TextBuffer* buffer = &state->buffer;
 			if (buffer->capacity <= buffer->len) {
@@ -624,29 +640,7 @@ nk_my_textedit_text(struct nk_my_text_edit *state, const char *text, int total_l
 			state->cursor.y = 0;
 			assert(buffer->len <= buffer->capacity);
 		}
-		else {
-			/* filter incoming text */
-			/*if (state->filter && !state->filter(state, unicode)) {
-			glyph_len = nk_utf_decode(text + text_len, &unicode, total_len - text_len);
-			text_len += glyph_len;
-			continue;
-			}*/
-			TextLine* line = &state->buffer.lines[state->cursor.x];
-			if (!NK_MY_TEXT_HAS_SELECTION(state))
-			{
-				if (state->mode == NK_TEXT_EDIT_MODE_REPLACE) {
-					//nk_textedit_makeundo_replace(state, state->cursor, 1, 1);
-					//TODO
-				}
-				nk_my_textedit_insert_glyph(line, &state->cursor, text + text_len, glyph_len);
 
-			}
-			else {
-				nk_my_textedit_delete_selection(state); /* implicitly clamps */
-				nk_my_textedit_insert_glyph(line, &state->cursor, text + text_len, glyph_len);
-				//nk_textedit_makeundo_insert(state, state->cursor, 1);
-			}
-		}
 		if (state->colorize) {
 			state->colorize(&state->buffer, state->cursor.x);
 		}
@@ -696,7 +690,7 @@ retry:
 		else {
 			state->acActive = false;
 		}
-		
+
 		break;
 
 	case NK_KEY_TEXT_SELECT_ALL:
@@ -809,7 +803,7 @@ retry:
 
 		/* compute current position of cursor point */
 
-		//TODO: Due to different glyph sizes this is not a robust solution for UTF, but should 
+		//TODO: Due to different glyph sizes this is not a robust solution for UTF, but should
 		//work fine for ASCII
 		state->cursor.x++;
 		nk_my_textedit_clamp(state);
@@ -1230,7 +1224,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 		}
 
 		/* cut & copy handler */
-		
+
 		{
 			int copy = nk_input_is_key_pressed(in, NK_KEY_COPY);
 			int cut = nk_input_is_key_pressed(in, NK_KEY_CUT);
@@ -1249,9 +1243,9 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 				}
 			}
 		}
-		
+
 		/* paste handler */
-		
+
 		{
 			int paste = nk_input_is_key_pressed(in, NK_KEY_PASTE);
 			if (paste && (flags & NK_EDIT_CLIPBOARD) && edit->clip.paste) {
@@ -1429,7 +1423,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 				if (NK_MY_TEXT_HAS_SELECTION(edit)) {
 
 					//Make sure selectStart and selectEnd are in the correct order
-					//Calling nk_my_textedit_sortselection would fix this, but calling it 
+					//Calling nk_my_textedit_sortselection would fix this, but calling it
 					//during a drag select messes up the selection
 					nk_my_vec2i selectStart = edit->select_start;
 					nk_my_vec2i selectEnd = edit->select_end;
@@ -1455,7 +1449,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 							tempBounds.w = bounds.w;
 							nk_widget_colored_text(out, tempBounds, line.text, startByte, line.colors, selectStart.y, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
 
-							
+
 							tempBounds.x += width;
 							int midByte = nk_my_bytes_to_glyph(&line, selectEnd.y);
 							width = font->width(font->userdata, font->height, &line.text[startByte], midByte - startByte);
@@ -1502,7 +1496,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 						nk_widget_colored_text(out, tempBounds, &line.text[endByte], line.len - endByte, &line.colors[selectEnd.y], line.numGlyphs - selectEnd.y, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
 						continue;
 					}
-					else if (selectStart.x < i + startRow && 
+					else if (selectStart.x < i + startRow &&
 						i + startRow < selectEnd.x) {
 						//The entire line is selected
 						t.background = style->selected_normal;
@@ -1512,7 +1506,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 					}
 				}
 
-				nk_widget_colored_text(out, bounds, line.text, line.len, line.colors, line.numGlyphs, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);	
+				nk_widget_colored_text(out, bounds, line.text, line.len, line.colors, line.numGlyphs, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
 			}
 		}
 
