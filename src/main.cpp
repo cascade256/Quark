@@ -36,7 +36,7 @@ int main() {
 	loadPlugins();
 
 	glfwInit();
-	g->win = glfwCreateWindow(1200, 800, "OdinEditor", NULL, NULL);
+	g->win = glfwCreateWindow(1200, 800, "Quark", NULL, NULL);
 	glfwMakeContextCurrent(g->win);
 	gl3wInit();
 
@@ -88,6 +88,7 @@ int main() {
 	g->theme[TOK_COMMENT] = nk_rgb(38, 139, 210);
 	g->theme[TOK_IDENTIFIER] = nk_rgb(238, 232, 213);
 	g->theme[TOK_STRING] = nk_rgb(42, 161, 152);
+	g->theme[TOK_NUMBER] = nk_rgb(42, 161, 152);
 	g->theme[TOK_RESERVED] = nk_rgb(203, 75, 22);
 
 	g->files.len = 0;

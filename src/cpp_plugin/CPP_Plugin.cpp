@@ -7,7 +7,7 @@ extern "C" {
 
     int parseString(char* text, int start, int buffLen) {
         int i = start;
-        while(i < buffLen && (text[i] != '\"')){
+        while(i < buffLen && (text[i] != '"')){
             i++;
         }
         return i + 1;
@@ -23,7 +23,7 @@ extern "C" {
 
     int parseIdentifier(char* text, int start, int buffLen) {
         int i = start;
-        while(i < buffLen && (isLetter(text[i]) || isNumber(text[i]))){
+        while(i < buffLen && (isLetter(text[i]) || isNumber(text[i]) || (text[i] == '_'))){
                 i++;
         }
         return i;
@@ -88,7 +88,7 @@ extern "C" {
 
                 }
                 */
-                putchar('\n');
+                //putchar('\n');
                 //printf("NumKeywords: %i\n", (sizeof(keywords) / sizeof(char*)));
                 //printf("Keyword: %s\n", keywords[1]);
                 //Check to see if the identier is a keyword
@@ -102,7 +102,7 @@ extern "C" {
                     }
 
                     for(int k = tokStart; k < i; k++) {
-                        printf("%c == %c?\n", line->text[k], keywords[j][k - tokStart]);
+                        //printf("%c == %c?\n", line->text[k], keywords[j][k - tokStart]);
                         if(line->text[k] != keywords[j][k - tokStart]){
                             isKeyword = false;
                             break;
@@ -114,15 +114,15 @@ extern "C" {
                 }
                 if(isKeyword) {
                     tok = TOK_RESERVED;
-                    printf("Found a keyword!\n");
+                    //printf("Found a keyword!\n");
                 }
                 else {
                     tok = TOK_IDENTIFIER;
                 }
 
             }
-            else if(c == '\"') {
-                i = parseString(line->text, i, line->len);
+            else if(c == '"') {
+                i = parseString(line->text, i + 1, line->len);
                 tok = TOK_STRING;
             }
             else if(c == '/' && line->text[i + 1] == '/') {

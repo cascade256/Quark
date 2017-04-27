@@ -366,9 +366,6 @@ nk_glfw3_key_callback(GLFWwindow* win, int key, int scancode, int action, int mo
 			case GLFW_KEY_LEFT_SHIFT:
 				glfw.actionKeys[NK_KEY_SHIFT] = true;
 				break;
-			default:
-				glfw.key_cb(win, key, scancode, action, mods);
-        return;
 			}
 
 	}
@@ -412,12 +409,12 @@ nk_glfw3_key_callback(GLFWwindow* win, int key, int scancode, int action, int mo
 		case GLFW_KEY_RIGHT:
 			glfw.actionKeys[NK_KEY_RIGHT] = true;
 			break;
-    case GLFW_KEY_SPACE:
-      {
-        if(glfw.text_len < NK_GLFW_TEXT_MAX) {
-          glfw.text[glfw.text_len++] = ' ';
-        }
-      }
+        case GLFW_KEY_SPACE:
+          {
+            if(glfw.text_len < NK_GLFW_TEXT_MAX) {
+                glfw.text[glfw.text_len++] = ' ';
+            }
+          }
 		default:
 			glfw.key_cb(win, key, scancode, action, mods);
 			return;
