@@ -21,4 +21,10 @@ endif
 
 cppplugin = shared_library('cpp_plugin', ['src/cpp_plugin/CPP_Plugin.cpp'], install : false)
 
-executable('quark', 'src/main.cpp', 'src/hashmap.cpp','src/OpenFileManager.cpp', 'src/PluginManager.cpp', 'src/FileTree.cpp', 'src/TextEditor.cpp', 'src/AutocompleteDialog.cpp', 'src/gl3w.cpp', dependencies: glfwdep)
+executable('quark', 'src/main.cpp', 'src/hashmap.cpp','src/OpenFileManager.cpp', 'src/PluginManager.cpp', 'src/FileTree.cpp', 'src/TextEditor.cpp', 'src/AutocompleteDialog.cpp', 'src/FindDialog.cpp', 'src/gl3w.cpp', dependencies: glfwdep)
+
+#Copy the font file to the build folder
+run_command('cp', 'src/DroidSansMono.ttf', 'build/')
+
+#Create the plugin dir
+run_command('mkdir', 'build/plugins')
