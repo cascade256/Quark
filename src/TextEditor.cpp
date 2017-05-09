@@ -1,7 +1,7 @@
 #include "TextEditor.h"
 
 static int activeFileIndex = 0;
-static bool findDialogOpen = true;
+static bool findDialogOpen = false;
 
 void drawTextEditor(nk_context* ctx, OpenFiles* files) {
 

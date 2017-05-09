@@ -139,17 +139,17 @@ extern "C" {
         }
     }
 
-    void getPluginInfo(PluginInfo* info) {
+    __declspec(dllexport) void getPluginInfo(PluginInfo* info) {
         strcpy(info->name, "Hallo");
     }
 
-    void initPlugin(Plugin_API api) {
+    __declspec(dllexport) void initPlugin(Plugin_API api) {
       api.registerColorizer(colorize, "cpp");
       api.registerColorizer(colorize, "c");
       api.registerColorizer(colorize, "h");
     }
 
-    void destroyPlugin(Plugin_API api) {
+    __declspec(dllexport) void destroyPlugin(Plugin_API api) {
 
     }
 
