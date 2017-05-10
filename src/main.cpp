@@ -8,6 +8,7 @@
 #include "NuklearAndConfig.h"
 #include "nuklear/nuklear_glfw_gl3.h"
 
+
 #ifdef _WIN32
 #include "dirent.h"
 #else
@@ -23,6 +24,7 @@
 #include "PluginManager.h"
 #include "hashmap.h"
 #include "Globals.h"
+#include "JobManager.h"
 
 Global* g;
 
@@ -30,6 +32,8 @@ void keyHandler(GLFWwindow* win, int key, int scancode, int action, int mods);
 
 
 int main() {
+	initJobManager();
+
 	g = new Global;
 	g->colorizers = hashmap_new();
 	g->autocompleters = hashmap_new();
@@ -93,16 +97,15 @@ int main() {
 
 	g->files.len = 0;
 	g->files.openFiles = NULL;
+	mtx_init(&g->filesMutex, mtx_plain);
 	//openFile(&g->files, "x:\\NewProjects\\OdinEditor2\\OdinEditor\\OdinEditor\\cura_app.py");
 	//openFile(&g->files, "x:\\NewProjects\\OdinEditor2\\sample.py");
-	openFile(&g->files, "x:\\NewProjects\\OdinEditor2\\FileTree.h");
-	openFile(&g->files, "~/test.h");
+	//openFile("x:\\NewProjects\\OdinEditor2\\FileTree.h");
+	addJob(jobbedOpenFile, (void*)"x:\\NewProjects\\OdinEditor2\\FileTree.h");
+	//openFile("~/test.h");
 
 	g->ctx->style.edit.selected_normal.a = 200;
 	g->ctx->style.edit.selected_normal.b = 200;
-
-
-
 
 	//glfwWindowShouldClose can be set from within nuklear_glfw_gl3.h keypress handler
 	while (!glfwWindowShouldClose(g->win)) {

@@ -119,7 +119,7 @@ void drawFileTree(nk_context* ctx, FileTreeItem* tree, OpenFiles* files) {
 			nk_input_is_mouse_down(&ctx->input, NK_BUTTON_DOUBLE_CLICK))
 		{
 			printf("File: %s was double clicked\n", tree->name);
-			openFile(files, tree->path);
+			addJob(jobbedOpenFile, (void*)tree->path);
 		}
 	}
 	else {

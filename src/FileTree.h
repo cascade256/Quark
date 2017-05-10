@@ -3,6 +3,7 @@
 #include "NuklearAndConfig.h"
 #include <cassert>
 #include "OpenFileManager.h"
+#include "JobManager.h"
 
 struct FileTreeItem {
 	int type;//dirent::d_type

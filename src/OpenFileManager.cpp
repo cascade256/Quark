@@ -46,7 +46,11 @@ void appendChar(TextLine* line, char c) {
 	line->numGlyphs++;
 }
 
-void openFile(OpenFiles* files, const char* path) {
+void jobbedOpenFile(void* path) {
+	openFile((const char*)path);
+}
+
+void openFile(const char* path) {
 	//Make sure the file is valid
 	FILE* file;
 	file = fopen(path, "r");
@@ -54,18 +58,6 @@ void openFile(OpenFiles* files, const char* path) {
 			printf("Failed to open the file: %s\n", path);
 			return;
 	}
-
-	//Expand the array by 1
-	MyOpenFile* oldFiles = files->openFiles;
-	int numOldFiles = files->len;
-
-	files->openFiles = new MyOpenFile[numOldFiles + 1];
-	files->len = numOldFiles + 1;
-
-	for (int i = 0; i < numOldFiles; i++) {
-		files->openFiles[i] = oldFiles[i];
-	}
-	delete[] oldFiles;
 
 	//Fill in the new file info
 	TextBuffer buffer;
@@ -175,9 +167,22 @@ void openFile(OpenFiles* files, const char* path) {
 		}
 	}
 
+	//Insert the new file into the openFiles array
+	mtx_lock(&g->filesMutex);
+	//Expand the array by 1
+	MyOpenFile* oldFiles = g->files.openFiles;
+	int numOldFiles = g->files.len;
 
-	files->openFiles[files->len - 1] = openFile;
+	g->files.openFiles = new MyOpenFile[numOldFiles + 1];
+	g->files.len = numOldFiles + 1;
 
+	for (int i = 0; i < numOldFiles; i++) {
+		g->files.openFiles[i] = oldFiles[i];
+	}
+	delete[] oldFiles;
+
+	g->files.openFiles[g->files.len - 1] = openFile;
+	mtx_unlock(&g->filesMutex);
 	/*
 	for (int i = 0; i < openFile.buffer.len; i++) {
 		for (int j = 0; j < openFile.buffer.lines[i].len; j++) {

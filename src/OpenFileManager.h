@@ -19,7 +19,9 @@ struct OpenFiles {
 	int len;
 };
 
-void openFile(OpenFiles* file, const char* path);
+
+void jobbedOpenFile(void* path);
+void openFile(const char* path);
 void saveFile(MyOpenFile* file);
 void destroyFiles(OpenFiles* files);
 
