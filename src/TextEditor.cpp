@@ -31,7 +31,7 @@ void drawTextEditor(nk_context* ctx, OpenFiles* files) {
 			nk_my_text_editor(ctx, NK_EDIT_CLIPBOARD | NK_EDIT_SIMPLE | NK_EDIT_MULTILINE | NK_EDIT_ALLOW_TAB, &f->edit, nk_filter_default);
 
 			if(findDialogOpen) {
-				drawFindDialog(&files->openFiles[activeFileIndex], nk_vec2(region.w - 200, tabHeight));
+				findDialogOpen = drawFindDialog(&files->openFiles[activeFileIndex], nk_vec2(region.w - 200, tabHeight));
 			}
 
 			nk_group_end(ctx);
@@ -53,4 +53,8 @@ void saveActiveFile(OpenFiles* files) {
 		saveFile(&files->openFiles[activeFileIndex]);
 	}
 
+}
+
+void showSearchDialog() {
+	findDialogOpen = true;
 }

@@ -326,12 +326,11 @@ nk_glfw3_key_callback(GLFWwindow* win, int key, int scancode, int action, int mo
 		return;
 	}
 
-	if (key == GLFW_KEY_ESCAPE) {
-		glfwSetWindowShouldClose(win, true);
-	}
-
-	if (key > GLFW_KEY_ESCAPE && key != ' ') {
+	if (key >= GLFW_KEY_ESCAPE && key != ' ') {
 			switch (key) {
+			case GLFW_KEY_ESCAPE:
+				glfw.actionKeys[NK_KEY_ESCAPE] = true;
+				break;
 			case GLFW_KEY_DELETE:
 				glfw.actionKeys[NK_KEY_DEL] = true;
 				break;

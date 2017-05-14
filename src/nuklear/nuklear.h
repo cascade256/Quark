@@ -545,6 +545,7 @@ enum nk_keys {
     NK_KEY_RIGHT,
 
 	NK_KEY_AUTOCOMPLETE,
+	NK_KEY_ESCAPE,
 
     /* Shortcuts: text field */
     NK_KEY_TEXT_INSERT_MODE,

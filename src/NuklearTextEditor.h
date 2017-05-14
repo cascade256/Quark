@@ -25,6 +25,8 @@ struct nk_my_text_edit {
 	nk_color* colorTable;
 	Colorize_Func colorize = NULL;
 
+	bool cursorMoved = false;
+
 	AutoComplete_Func autocomplete = NULL;
 	AutoCompleteData* acData;
 	bool acActive;
@@ -1336,6 +1338,14 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 				}
 				else edit->scrollbar.y = 0;
 			}
+			if (edit->cursorMoved) {
+				/* vertical scroll */
+				if (cursor_pos.y < edit->scrollbar.y)
+					edit->scrollbar.y = NK_MAX(0.0f, cursor_pos.y - row_height);
+				if (cursor_pos.y >= edit->scrollbar.y + area.h)
+					edit->scrollbar.y = cursor_pos.y - area.h + 2 * row_height;
+				edit->cursorMoved = false;
+			}
 
 			/* scrollbar widget */
 			if (flags & NK_EDIT_MULTILINE)
@@ -1565,4 +1575,5 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 	nk_push_scissor(out, old_clip);
 	return ret;
 }
+
 #endif

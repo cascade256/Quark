@@ -198,6 +198,10 @@ void keyHandler(GLFWwindow* win, int key, int scancode, int action, int mods) {
 		switch (key) {
 		case GLFW_KEY_S:
 			saveActiveFile(&g->files);
+			break;
+		case GLFW_KEY_F:
+			showSearchDialog();
+			break;
 		}
 	}
 }

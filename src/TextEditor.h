@@ -6,3 +6,4 @@
 
 void drawTextEditor(nk_context* ctx, OpenFiles* files);
 void saveActiveFile(OpenFiles* files);
+void showSearchDialog();
