@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "keywords.h"
+#include "build.h"
 
 extern "C" {
 
@@ -147,6 +148,8 @@ extern "C" {
       api.registerColorizer(colorize, "cpp");
       api.registerColorizer(colorize, "c");
       api.registerColorizer(colorize, "h");
+
+	  buildProject();
     }
 
     __declspec(dllexport) void destroyPlugin(Plugin_API api) {
