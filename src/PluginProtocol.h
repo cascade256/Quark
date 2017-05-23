@@ -71,6 +71,8 @@ struct PluginAttachment {
 	void* data;
 };
 
+typedef void(*Func)();
+
 typedef void(*RegisterColorizerFunc)(Colorize_Func, const char* fileExtension);
 typedef void(*RegisterAutocompleterFunc)(AutoComplete_Func, const char* fileExtension);
 

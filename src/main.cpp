@@ -25,6 +25,7 @@
 #include "hashmap.h"
 #include "Globals.h"
 #include "JobManager.h"
+#include "MainMenu.h"
 
 Global* g;
 
@@ -37,6 +38,8 @@ int main() {
 	g = new Global;
 	g->colorizers = hashmap_new();
 	g->autocompleters = hashmap_new();
+	addMenuItem(addMenu("File"), "Open", NULL);
+
 	loadPlugins();
 
 	glfwInit();
@@ -121,6 +124,7 @@ int main() {
 
 			int windowHeaderHeight = 30;
 			//Menu bar
+			/*
 			int menuBarHeight = 25;
 			nk_menubar_begin(g->ctx);
 			nk_layout_row_begin(g->ctx, NK_STATIC, menuBarHeight, 4);
@@ -133,6 +137,8 @@ int main() {
 				nk_menu_end(g->ctx);
 			}
 			nk_menubar_end(g->ctx);
+			*/
+			drawMainMenu();
 
 			struct nk_rect region = nk_window_get_content_region(g->ctx);
 			float ratio = 0.2f;

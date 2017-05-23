@@ -149,7 +149,7 @@ extern "C" {
       api.registerColorizer(colorize, "c");
       api.registerColorizer(colorize, "h");
 
-	  buildProject();
+	  //buildProject();
     }
 
     __declspec(dllexport) void destroyPlugin(Plugin_API api) {

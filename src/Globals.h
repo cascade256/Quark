@@ -4,6 +4,7 @@
 #include "nuklear/nuklear_glfw_gl3.h"
 #include "hashmap.h"
 #include "tinycthread.h"
+#include "MainMenu.h"
 
 struct Global {
 	GLFWwindow* win;
@@ -14,6 +15,7 @@ struct Global {
 	map_t autocompleters;
 	nk_color* theme;
 	nk_color background;
+	MainMenu mainMenu;
 };
 
 extern Global* g;
