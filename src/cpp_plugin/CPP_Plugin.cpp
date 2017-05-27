@@ -149,6 +149,9 @@ extern "C" {
       api.registerColorizer(colorize, "c");
       api.registerColorizer(colorize, "h");
 
+	  int buildMenuID = api.registerMenu("Build");
+	  api.registerMenuItem(buildMenuID, "Rebuild", buildProject);
+
 	  //buildProject();
     }
 

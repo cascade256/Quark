@@ -13,6 +13,10 @@ void registerAutocompleter(AutoComplete_Func func, const char* fileExt) {
 	hashmap_put(g->autocompleters, fileExt, (void*)func);
 }
 
+Global* getGlobals() {
+	return g;
+}
+
 bool loadPlugin(const char* path, Plugin* plugin) {
 	printf("Loading plugin: %s\n", path);
 
@@ -67,6 +71,9 @@ void loadPlugins() {
 	plugins = new std::vector<Plugin>();
 	api.registerColorizer = registerColorizer;
 	api.registerAutocompleter = registerAutocompleter;
+	api.getGlobalData = getGlobals;
+	api.registerMenu = addMenu;
+	api.registerMenuItem = addMenuItem;
 
 
 	char* pluginPath = new char[1024];

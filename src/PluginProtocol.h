@@ -71,14 +71,21 @@ struct PluginAttachment {
 	void* data;
 };
 
+struct Global;
 typedef void(*Func)();
 
 typedef void(*RegisterColorizerFunc)(Colorize_Func, const char* fileExtension);
 typedef void(*RegisterAutocompleterFunc)(AutoComplete_Func, const char* fileExtension);
+typedef Global*(*GetGlobalDataFunc)(void);
+typedef int(*RegisterMenuFunc)(const char* name);
+typedef void(*RegisterMenuItemFunc)(int menuID, const char* name, Func onClick);
 
 struct Plugin_API {
 	RegisterColorizerFunc registerColorizer;
 	RegisterAutocompleterFunc registerAutocompleter;
+	GetGlobalDataFunc getGlobalData;
+	RegisterMenuFunc registerMenu;
+	RegisterMenuItemFunc registerMenuItem;
 };
 
 typedef void(__stdcall *type_initPlugin)(Plugin_API);

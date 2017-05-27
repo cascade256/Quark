@@ -1,13 +1,17 @@
 #include "MainMenu.h"
 #include "Globals.h"
 
+void jobbedEvent(void* func) {
+	((Func)func)();
+}
+
 void drawSubMenu(SubMenu subMenu) {
 	if (nk_menu_begin_label(g->ctx, subMenu.name, NK_TEXT_LEFT, nk_vec2i(120, 200))) {
 		nk_layout_row_dynamic(g->ctx, 25, 1);
 		for (int i = 0; i < subMenu.numItems; i++) {
 			if (nk_menu_item_label(g->ctx, subMenu.items[i].name, NK_TEXT_LEFT)) {
 				if (subMenu.items[i].onClick) {
-					subMenu.items[i].onClick();
+					addJob(jobbedEvent, subMenu.items[i].onClick);
 				}
 			}
 		}

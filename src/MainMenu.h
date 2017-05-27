@@ -1,6 +1,7 @@
 #pragma once
 #include "PluginProtocol.h"
 #include "NuklearAndConfig.h"
+#include "JobManager.h"
 	
 struct MenuItem {
 	char* name;
