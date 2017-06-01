@@ -1,6 +1,7 @@
 #pragma once
 #include "tinycthread.h"
 #include <stdio.h>
+#include "Logger.h"
 
 typedef void(*JobFunc)(void*);
 

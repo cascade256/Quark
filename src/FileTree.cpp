@@ -5,7 +5,7 @@
 #include <dirent.h>
 #endif
 void createFileTree(const char* path, FileTreeItem* tree) {
-	printf("Creating file tree: %s\n", path);
+	logI("Creating file tree: %s\n", path);
 	int pathLen = strlen(path);
 	tree->path = new char[pathLen + 1];
 	strncpy(tree->path, path, pathLen + 1);
@@ -85,7 +85,7 @@ void extendFileTree(FileTreeItem* tree) {
 		subItems[i].subItems = NULL;
 		subItems[i].loaded = false;
 		subItems[i].selected = false;
-		printf("%s\n", subItems[i].name);
+		logI("%s\n", subItems[i].name);
 		ent = readdir(dir);
 		while (ent != NULL && (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)) {
 			ent = readdir(dir);
@@ -118,7 +118,7 @@ void drawFileTree(nk_context* ctx, FileTreeItem* tree, OpenFiles* files) {
 			nk_input_is_mouse_prev_hovering_rect(&ctx->input, bounds)) &&
 			nk_input_is_mouse_down(&ctx->input, NK_BUTTON_DOUBLE_CLICK))
 		{
-			printf("File: %s was double clicked\n", tree->name);
+			logI("File: %s was double clicked\n", tree->name);
 			addJob(jobbedOpenFile, (void*)tree->path);
 		}
 	}

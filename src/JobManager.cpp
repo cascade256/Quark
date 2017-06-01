@@ -13,7 +13,7 @@ struct JobItem {
 };
 
 static JobItem* jobs;
-static cnd_t jobsAvailable;
+static cnd_t jobsAvailableCND;
 static mtx_t jobsListMutex;
 static mtx_t m;
 
@@ -33,36 +33,40 @@ int launchFunc(void* i) {
 	
 	while (true) {
 		JobItem* job;
-		if (jobs == NULL) {
-			cnd_wait(&jobsAvailable, &m);
-			printf("Jobs became available!\n");
+		bool jobsAvailable;
+		mtx_lock(&jobsListMutex);
+		jobsAvailable = (jobs != NULL);
+		if (!jobsAvailable) {
+			mtx_unlock(&jobsListMutex);
+			cnd_wait(&jobsAvailableCND, &m);
+			logD("Jobs became available! (%i)\n", i);
 		}
 		else {
-			mtx_lock(&jobsListMutex);
 			job = jobs;
 			jobs = job->next;
 			mtx_unlock(&jobsListMutex);
+			logD("Took job(%i)\n", i);
 			job->func(job->data);
 			delete job;
-			printf("Finished job\n");
+			logD("Finished job(%i)\n", i);
 		}
 	}
 	return 0;
 }
 
 void testFunc(void* arg) {
-	printf("Test: %i\n", (int)arg);
+	logD("Test: %i\n", (int)arg);
 }
 
 void initJobManager() {
-	cnd_init(&jobsAvailable);
+	cnd_init(&jobsAvailableCND);
 	mtx_init(&m, mtx_plain);
 	mtx_init(&jobsListMutex, mtx_plain);
 
 	numThreads = getNumCores() - 1;//Count the starting thread
 	threads = new thrd_t[numThreads];
 
-	printf("NumThreads: %i\n", numThreads);
+	logI("NumThreads: %i\n", numThreads);
 
 	for (int i = 0; i < numThreads; i++) {
 		thrd_create(&threads[i], launchFunc, (void*)i);
@@ -96,7 +100,7 @@ void addJob(JobFunc func, void* arg) {
 	}
 
 	mtx_unlock(&jobsListMutex);
-
-	cnd_signal(&jobsAvailable);
+	logD("Added Job, waking up threads(%i)\n", thrd_current());
+	cnd_broadcast(&jobsAvailableCND);
 }
 

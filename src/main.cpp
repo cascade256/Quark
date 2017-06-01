@@ -26,19 +26,37 @@
 #include "Globals.h"
 #include "JobManager.h"
 #include "MainMenu.h"
+#include "Logger.h"
 
 Global* g;
 
 void keyHandler(GLFWwindow* win, int key, int scancode, int action, int mods);
 
+void sleepJob(void*) {
+	logD("Start sleeping\n");
+	timespec timeToSleep;
+	timeToSleep.tv_sec = 5;
+	thrd_sleep(&timeToSleep, 0);
+	logD("Done Sleeping\n");
+}
+
+void jobsTest() {
+	addJob(sleepJob, NULL);
+	addJob(jobbedOpenFile, "..\\meson.build");
+}
 
 int main() {
+	initLog(LOG_DEBUG);
 	initJobManager();
 
 	g = new Global;
 	g->colorizers = hashmap_new();
 	g->autocompleters = hashmap_new();
 	addMenuItem(addMenu("File"), "Open", NULL);
+	
+	int testMenuID = addMenu("Test");
+	addMenuItem(testMenuID, "Jobs Test", jobsTest);
+	
 
 	loadPlugins();
 
@@ -84,7 +102,8 @@ int main() {
 #else
 		getcwd(path, 1024);
 #endif
-	printf("Path: %s\n", path);
+	//printf("Path: %s\n", path);
+	logD("Path: %s\n", path);
 	strcat(path, "/..");
 	createFileTree(path, &fileTree);
 	delete[] path;
@@ -112,6 +131,7 @@ int main() {
 
 	//glfwWindowShouldClose can be set from within nuklear_glfw_gl3.h keypress handler
 	while (!glfwWindowShouldClose(g->win)) {
+		flushLog();
 		glfwPollEvents();
 		nk_glfw3_new_frame();
 		int width;

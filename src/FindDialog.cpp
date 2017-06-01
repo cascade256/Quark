@@ -65,7 +65,7 @@ bool drawFindDialog(MyOpenFile* file, struct nk_vec2 pos) {
 				currentMatch = 0;
 			}
 
-			printf("Enter key down\n");
+			logD("Enter key down\n");
 		}
 		if (nk_input_is_key_pressed(&g->ctx->input, NK_KEY_ESCAPE)) {
 			nk_popup_close(g->ctx);
@@ -116,7 +116,7 @@ void search(const TextBuffer* buffer, const char* str, const int strLen) {
 			x++;
 		}
 	}
-	printf("%i matches found \n", numMatches);
+	logI("%i matches found \n", numMatches);
 	searchIsDirty = false;
 }
 

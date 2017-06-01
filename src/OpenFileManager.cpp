@@ -55,7 +55,7 @@ void openFile(const char* path) {
 	FILE* file;
 	file = fopen(path, "r");
 	if(!file) {
-			printf("Failed to open the file: %s\n", path);
+			logW("Failed to open the file: %s\n", path);
 			return;
 	}
 
@@ -146,7 +146,7 @@ void openFile(const char* path) {
 		}
 		else {
 			openFile.edit.colorize = NULL;
-			printf("No colorizer found\n");
+			logW("No colorizer found\n");
 		}
 
 		//Setup the autocompleter
@@ -207,7 +207,7 @@ void saveFile(MyOpenFile* file) {
 		file->unsaved = false;
 	}
 	else {
-		printf("Couldn't open the file for writing\n");
+		logW("Couldn't open the file for writing\n");
 	}
 }
 

@@ -18,12 +18,12 @@ Global* getGlobals() {
 }
 
 bool loadPlugin(const char* path, Plugin* plugin) {
-	printf("Loading plugin: %s\n", path);
+	logI("Loading plugin: %s\n", path);
 
 #ifdef _WIN32
 	HINSTANCE dll = LoadLibrary(path);
 	if (!dll) {
-		printf("Failed to load the plugin\n");
+		logW("Failed to load the plugin\n");
 		return false;
 	}
 
@@ -42,7 +42,7 @@ bool loadPlugin(const char* path, Plugin* plugin) {
 #else
 	void* dll = dlopen(path, RTLD_NOW);
 	if (!dll) {
-		printf("Failed to load the plugin\n");
+		logW("Failed to load the plugin\n");
 		return false;
 	}
 
@@ -92,14 +92,14 @@ void loadPlugins() {
 #endif
 
 
-	printf("Plugins path: %s\n", pluginPath);
+	logI("Plugins path: %s\n", pluginPath);
 
 	char* pluginNameLoc = &pluginPath[strlen(pluginPath)];
 	int maxPluginNameLen = 1024 - (pluginNameLoc - pluginPath);
 
 	DIR* dir = opendir(pluginPath);
 	if (dir == NULL) {
-		printf("The plugins folder could not be read\n");
+		logW("The plugins folder could not be read\n");
 		return;
 	}
 	dirent* ent;
@@ -122,7 +122,7 @@ void loadPlugins() {
 				setupPlugin(plugin);
 			}
 			else {
-				printf("The plugin failed to load: %s\n", pluginPath);
+				logW("The plugin failed to load: %s\n", pluginPath);
 			}
 		}
 
