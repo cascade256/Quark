@@ -35,7 +35,7 @@ void keyHandler(GLFWwindow* win, int key, int scancode, int action, int mods);
 void sleepJob(void*) {
 	logD("Start sleeping\n");
 	timespec timeToSleep;
-	timeToSleep.tv_sec = 5;
+	timeToSleep.tv_sec = 10;
 	thrd_sleep(&timeToSleep, 0);
 	logD("Done Sleeping\n");
 }

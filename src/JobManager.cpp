@@ -30,7 +30,8 @@ int getNumCores() {
 }
 
 int launchFunc(void* i) {
-	
+	mtx_t tssMutex;
+	mtx_init(&tssMutex, mtx_plain);
 	while (true) {
 		JobItem* job;
 		bool jobsAvailable;
@@ -38,13 +39,14 @@ int launchFunc(void* i) {
 		jobsAvailable = (jobs != NULL);
 		if (!jobsAvailable) {
 			mtx_unlock(&jobsListMutex);
-			cnd_wait(&jobsAvailableCND, &m);
+			cnd_wait(&jobsAvailableCND, &tssMutex);
 			logD("Jobs became available! (%i)\n", i);
 		}
 		else {
 			job = jobs;
 			jobs = job->next;
 			mtx_unlock(&jobsListMutex);
+			cnd_broadcast(&jobsAvailableCND);
 			logD("Took job(%i)\n", i);
 			job->func(job->data);
 			delete job;
@@ -73,11 +75,6 @@ void initJobManager() {
 	}
 
 	jobs = NULL;
-
-	/*
-	for (int i = 0; i < 10000; i++) {
-		addJob(testFunc, (void*)i);
-	}*/
 }
 
 void addJob(JobFunc func, void* arg) {
