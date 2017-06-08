@@ -10,6 +10,7 @@ struct Global {
 	GLFWwindow* win;
 	OpenFiles files;
 	mtx_t filesMutex;
+	int activeFileIndex;
 	nk_context* ctx;
 	map_t colorizers;
 	map_t autocompleters;

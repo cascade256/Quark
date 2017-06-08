@@ -17,7 +17,6 @@
 #endif
 
 #include <string.h>
-#include "overview.h"
 #include "FileTree.h"
 #include "OpenFileManager.h"
 #include "TextEditor.h"
@@ -45,6 +44,15 @@ void jobsTest() {
 	addJob(jobbedOpenFile, "..\\meson.build");
 }
 
+void printActiveFile() {
+	TextBuffer* b = &g->files.openFiles[g->activeFileIndex].edit.buffer;
+	for (int i = 0; i < b->len; i++) {
+		for (int j = 0; j < b->lines[i].len; j++) {
+			putchar(b->lines[i].text[j]);
+		}
+	}
+}
+
 int main() {
 	initLog(LOG_DEBUG);
 	initJobManager();
@@ -52,10 +60,12 @@ int main() {
 	g = new Global;
 	g->colorizers = hashmap_new();
 	g->autocompleters = hashmap_new();
+	g->activeFileIndex = 0;
 	addMenuItem(addMenu("File"), "Open", NULL);
 	
 	int testMenuID = addMenu("Test");
 	addMenuItem(testMenuID, "Jobs Test", jobsTest);
+	addMenuItem(testMenuID, "Print Active File", printActiveFile);
 	
 
 	loadPlugins();
