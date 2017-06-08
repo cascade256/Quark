@@ -41,7 +41,7 @@ void appendChar(TextLine* line, char c) {
 		delete[] oldColors;
 	}
 	line->text[line->len] = c;
-	line->colors[line->numGlyphs] = 0;
+	line->colors[line->numGlyphs] = TOK_DEFAULT;
 	line->len++;
 	line->numGlyphs++;
 }

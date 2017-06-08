@@ -563,7 +563,7 @@ nk_my_textedit_insert_glyph(struct TextLine* line, nk_my_vec2i* cursor, const ch
 		NK_MEMCPY(&line->text[byteIndex], text, glyph_len);
 		memmove(&line->colors[cursor->y + 1], &line->colors[cursor->y], line->numGlyphs - cursor->y);
 	}
-	line->colors[cursor->y] = 0;
+	line->colors[cursor->y] = TOK_DEFAULT;
 	line->len += glyph_len;
 	line->numGlyphs++;
 	cursor->y++;
@@ -630,6 +630,7 @@ nk_my_textedit_text(struct nk_my_text_edit *state, const char *text, int total_l
 			newLine->text = new char[newLine->capacity];
 			newLine->colors = new char[newLine->colorCapacity];
 			NK_MEMCPY(newLine->text, &line->text[byteIndex], newLine->len);
+			NK_MEMCPY(newLine->colors, &line->colors[state->cursor.y], newLine->numGlyphs);
 			line->len = byteIndex;
 			line->numGlyphs = state->cursor.y;
 
