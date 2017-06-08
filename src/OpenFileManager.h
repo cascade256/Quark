@@ -4,6 +4,7 @@
 #include <cassert>
 #include "NuklearAndConfig.h"
 #include "PluginProtocol.h"
+#include "Array.h"
 
 struct MyOpenFile {
 	char* path;
@@ -12,6 +13,8 @@ struct MyOpenFile {
 	bool unsaved = false;
 	//Colorize_Func colorize = NULL;
 	struct nk_my_text_edit edit;
+
+	Array<int> breakpoints;
 };
 
 struct OpenFiles {

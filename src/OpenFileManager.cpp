@@ -99,6 +99,10 @@ void openFile(const char* path) {
 	openFile.path = new char[pathLen + 1];
 	strncpy(openFile.path, path, pathLen + 1);
 	openFile.unsaved = false;
+	arrayInit(&openFile.breakpoints);
+	arrayAdd(&openFile.breakpoints, 1);
+	arrayAdd(&openFile.breakpoints, 10);
+
 
 	const char* fileName;
 #ifdef _WIN32
