@@ -10,7 +10,7 @@ struct MyOpenFile {
 	char* name;
 	int nameLen;//Does not include the NULL byte, but does include the possible *
 	bool unsaved = false;
-	Colorize_Func colorize = NULL;
+	//Colorize_Func colorize = NULL;
 	struct nk_my_text_edit edit;
 };
 

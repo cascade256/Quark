@@ -27,6 +27,10 @@
 #include "MainMenu.h"
 #include "Logger.h"
 
+#define ARRAY_IMPLEMENTATION
+#include "Arrays.h"
+
+
 Global* g;
 
 void keyHandler(GLFWwindow* win, int key, int scancode, int action, int mods);
