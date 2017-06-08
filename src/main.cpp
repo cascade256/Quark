@@ -27,8 +27,7 @@
 #include "MainMenu.h"
 #include "Logger.h"
 
-#define ARRAY_IMPLEMENTATION
-#include "Arrays.h"
+#include "Array.h"
 
 
 Global* g;

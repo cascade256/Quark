@@ -1,23 +1,9 @@
-template <class T>
-struct Array {
-	T* data;
-	int len;
-	int capacity;
-};
-
-template <class T>
-void initArray(Array<T>* arr);
-
-template <class T>
-void arrayAdd(Array<T>* arr, T item);
-
-
-#ifdef ARRAY_IMPLEMENTATION
-
+#include "Array.h"
+/*
 template <class T>
 void arrayInit(Array<T>* arr) {
 	arr->len = 0;
-	arr->capacity = 10;
+	arr->capacity = 0;
 	arr->data = new T[arr->capacity];
 }
 
@@ -34,4 +20,4 @@ void arrayAdd(Array<T>* arr, T item) {
 	arr->data[arr->len] = item;
 	arr->len++;
 }
-#endif
+*/
