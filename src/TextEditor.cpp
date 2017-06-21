@@ -23,6 +23,13 @@ void drawTextEditor(nk_context* ctx, OpenFiles* files) {
 					g->activeFileIndex = i;
 				}
 			}
+
+			//This section needs to be locked because when a new file is added, the array of open files is memcopied to a new array and the
+			//old one is deleted.
+			mtx_lock(&g->filesMutex);
+
+			MyOpenFile* f = &files->openFiles[g->activeFileIndex];
+
 			region = nk_window_get_content_region(ctx);
 			nk_layout_row_begin(ctx, NK_STATIC, region.h - tabHeight, 2);
 			{
@@ -38,19 +45,28 @@ void drawTextEditor(nk_context* ctx, OpenFiles* files) {
 				breakpointArea.x = region.x;
 				breakpointArea.y = region.y + tabHeight;
 				
-				float scroll = files->openFiles[g->activeFileIndex].edit.scrollbar.y;
+				float scroll = f->edit.scrollbar.y;
 
-				nk_fill_rect(&ctx->current->buffer, breakpointArea, 0, nk_rgba(0, 100, 100, 100));
+				//nk_fill_rect(&ctx->current->buffer, breakpointArea, 0, nk_rgba(0, 100, 100, 100));
 
+				//Check for any clicks in the breakpoint area
 				if (nk_input_mouse_clicked(&ctx->input, NK_BUTTON_LEFT, breakpointArea)) {
 					logD("Breakpoint area clicked\n");
 					int line = (-breakpointArea.y + ctx->input.mouse.pos.y - scroll) / row_height;
-					arrayAdd(&files->openFiles[g->activeFileIndex].breakpoints, line);
+					int idx = arrayIndexOf(&f->breakpoints, line);
+					if (idx == -1) {
+						//There is not a breakpoint on this line, so add one
+						arrayAdd(&f->breakpoints, line);
+					}
+					else {
+						arrayRemoveAt(&f->breakpoints, idx);
+					}
+					
 					logD("line: %i\n", line);
 				}
 
-				for (int i = 0; i < files->openFiles[g->activeFileIndex].breakpoints.len; i++) {
-					int line = files->openFiles[g->activeFileIndex].breakpoints.data[i];
+				for (int i = 0; i < f->breakpoints.len; i++) {
+					int line = f->breakpoints.data[i];
 					float offsetFromTop = -scroll + line * row_height;
 					if (offsetFromTop > 0) {
 						struct nk_rect r;
@@ -68,23 +84,18 @@ void drawTextEditor(nk_context* ctx, OpenFiles* files) {
 				nk_layout_row_push(ctx, region.w - row_height);
 				//printf("Active file index: %i\n", activeFileIndex);
 
-
-				//This section needs to be locked because when a new file is added, the array of open files is memcopied to a new array and the
-				//old one is deleted. If this happens while nk_my_text_editor() is running, f->edit will point to freed memory. Similar for 
-				//drawFindDialog().
-				mtx_lock(&g->filesMutex);
-
-				MyOpenFile* f = &files->openFiles[g->activeFileIndex];
 				nk_my_text_editor(ctx, NK_EDIT_CLIPBOARD | NK_EDIT_SIMPLE | NK_EDIT_MULTILINE | NK_EDIT_ALLOW_TAB, &f->edit, nk_filter_default);
 
 				//Draw the find dialog
 				if (findDialogOpen) {
-					findDialogOpen = drawFindDialog(&files->openFiles[g->activeFileIndex], nk_vec2(region.w - 200, tabHeight));
+					findDialogOpen = drawFindDialog(f, nk_vec2(region.w - 200, tabHeight));
 				}
 
-				mtx_unlock(&g->filesMutex);
+
 			}
 			nk_layout_row_end(ctx);
+
+			mtx_unlock(&g->filesMutex);
 
 			nk_group_end(ctx);
 

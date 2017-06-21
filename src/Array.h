@@ -1,4 +1,5 @@
 #pragma once
+
 template <class T>
 struct Array {
 	T* data;
@@ -32,3 +33,21 @@ void arrayAdd(Array<T>* arr, T item) {
 	arr->data[arr->len] = item;
 	arr->len++;
 }
+
+template <class T>
+int arrayIndexOf(Array<T>* arr, T item) {
+	for (int i = 0; i < arr->len; i++) {
+		if (arr->data[i] == item) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+template <class T>
+void arrayRemoveAt(Array<T>* arr, int i) {
+	memcpy(&arr->data[i], &arr->data[i + 1], sizeof(T) * (arr->len - i));
+	arr->len--;
+}
+
+

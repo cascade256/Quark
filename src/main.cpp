@@ -56,6 +56,24 @@ void printActiveFile() {
 	}
 }
 
+void arrayTest() {
+	Array<int> nums;
+	arrayInit(&nums);
+	arrayAdd(&nums, 1);
+	arrayAdd(&nums, 2);
+	arrayAdd(&nums, 3);
+
+	for (int i = 0; i < nums.len; i++) {
+		logD("ArrayTest: nums[%i] = %i \n", i, nums.data[i]);
+	}
+
+	arrayRemoveAt(&nums, 1);
+
+	for (int i = 0; i < nums.len; i++) {
+		logD("ArrayTest: nums[%i] = %i \n", i, nums.data[i]);
+	}
+}
+
 int main() {
 	initLog(LOG_DEBUG);
 	initJobManager();
@@ -118,7 +136,7 @@ int main() {
 	//printf("Path: %s\n", path);
 	logD("Path: %s\n", path);
 	strcat(path, "/..");
-	createFileTree(path, &fileTree);
+	createFileTree("X:\\Github\\CADlib", &fileTree);
 	delete[] path;
 
 	g->theme = new nk_color[12];
@@ -136,11 +154,13 @@ int main() {
 	//openFile(&g->files, "x:\\NewProjects\\OdinEditor2\\OdinEditor\\OdinEditor\\cura_app.py");
 	//openFile(&g->files, "x:\\NewProjects\\OdinEditor2\\sample.py");
 	//openFile("x:\\NewProjects\\OdinEditor2\\FileTree.h");
-	addJob(jobbedOpenFile, (void*)"x:\\NewProjects\\OdinEditor2\\FileTree.h");
+	//addJob(jobbedOpenFile, (void*)"x:\\NewProjects\\OdinEditor2\\FileTree.h");
 	//openFile("~/test.h");
 
 	g->ctx->style.edit.selected_normal.a = 200;
 	g->ctx->style.edit.selected_normal.b = 200;
+
+	arrayTest();
 
 	//glfwWindowShouldClose can be set from within nuklear_glfw_gl3.h keypress handler
 	while (!glfwWindowShouldClose(g->win)) {
