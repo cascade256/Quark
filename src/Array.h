@@ -16,7 +16,7 @@ void arrayAdd(Array<T>* arr, T item);
 template <class T>
 void arrayInit(Array<T>* arr) {
 	arr->len = 0;
-	arr->capacity = 0;
+	arr->capacity = 1;
 	arr->data = new T[arr->capacity];
 }
 

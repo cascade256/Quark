@@ -1,6 +1,6 @@
 #pragma once
 #include <ctime>
 #include <stdio.h>
-#include "../parson.h"
+#include "CPP_Plugin.h"
 
-void buildProject();
+void buildProject(Project project);

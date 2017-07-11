@@ -9,20 +9,6 @@
 #endif
 
 
-struct TargetCompileData {
-	char** sourceFiles;
-	int numSourceFiles;
-
-	char** objFiles;
-	int numObjFiles;
-
-	char** includeDirs;
-	int numIncludeDirs;
-	
-	char** libs;
-	int numLibs;
-};
-
 
 #ifdef _WIN32
 #define COMPILER_CMD "\"C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat\" amd64 && cl /MDd "
@@ -31,23 +17,20 @@ void compileFile(const char* path) {
 	printf("Test result: %i\n", r);
 }
 void compileTarget(TargetCompileData data) {
-	
 	int cmdLen = sizeof(COMPILER_CMD);
 
-	for (int i = 0; i < data.numSourceFiles; i++) {
-		cmdLen += strlen(data.sourceFiles[i]) + 1;//+1 for the space
+	cmdLen += strlen("/Fe") + strlen(data.name) + strlen(".exe ");
+
+	for (int i = 0; i < data.sourceFiles.len; i++) {
+		cmdLen += strlen(data.sourceFiles.data[i]) + 1;//+1 for the space
 	}
 
-	for (int i = 0; i < data.numObjFiles; i++) {
-		cmdLen += strlen(data.objFiles[i]) + 1;//+1 for the space
+	for (int i = 0; i < data.includeDirs.len; i++) {
+		cmdLen += strlen(data.includeDirs.data[i]) + 4;//+4 for "/I <LIBRARY> "
 	}
 
-	for (int i = 0; i < data.numIncludeDirs; i++) {
-		cmdLen += strlen(data.includeDirs[i]) + 4;//+4 for "/I <LIBRARY> "
-	}
-
-	for (int i = 0; i < data.numLibs; i++) {
-		cmdLen += strlen(data.libs[i]) + 1;//+1 for the space
+	for (int i = 0; i < data.libs.len; i++) {
+		cmdLen += strlen(data.libs.data[i]) + 1;//+1 for the space
 	}
 
 	char* cmd = new char[cmdLen];
@@ -55,32 +38,32 @@ void compileTarget(TargetCompileData data) {
 	strcpy(cmd, COMPILER_CMD);
 	offset += sizeof(COMPILER_CMD) - 1;
 
-	for (int i = 0; i < data.numSourceFiles; i++) {
-		strcpy(cmd + offset, data.sourceFiles[i]);
-		offset += strlen(data.sourceFiles[i]);
+	strcpy(cmd + offset, "/Fe");
+	offset += 3;
+	strcpy(cmd + offset, data.name);
+	offset += strlen(data.name);
+	strcpy(cmd + offset, ".exe ");
+	offset += 5;
+
+	for (int i = 0; i < data.sourceFiles.len; i++) {
+		strcpy(cmd + offset, data.sourceFiles.data[i]);
+		offset += strlen(data.sourceFiles.data[i]);
 		cmd[offset] = ' ';
 		offset++;
 	}
 
-	for (int i = 0; i < data.numObjFiles; i++) {
-		strcpy(cmd + offset, data.objFiles[i]);
-		offset += strlen(data.objFiles[i]);
-		cmd[offset] = ' ';
-		offset++;
-	}
-
-	for (int i = 0; i < data.numIncludeDirs; i++) {
+	for (int i = 0; i < data.includeDirs.len; i++) {
 		strcpy(cmd + offset, "/I ");
 		offset += 3;
-		strcpy(cmd + offset, data.includeDirs[i]);
-		offset += strlen(data.includeDirs[i]);
+		strcpy(cmd + offset, data.includeDirs.data[i]);
+		offset += strlen(data.includeDirs.data[i]);
 		cmd[offset] = ' ';
 		offset++;
 	}
 
-	for (int i = 0; i < data.numLibs; i++) {
-		strcpy(cmd + offset, data.libs[i]);
-		offset += strlen(data.libs[i]);
+	for (int i = 0; i < data.libs.len; i++) {
+		strcpy(cmd + offset, data.libs.data[i]);
+		offset += strlen(data.libs.data[i]);
 		cmd[offset] = ' ';
 		offset++;
 	}
@@ -91,23 +74,6 @@ void compileTarget(TargetCompileData data) {
 	system(cmd);
 	delete[] cmd;
 }
-/*
-time_t getFileTime(const char* path) {
-	HANDLE file = CreateFile(path, GENERIC_READ, NULL, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (file == INVALID_HANDLE_VALUE) {
-		printf("The file %s could not be opened!\n", path);
-		return 0;
-	}
-	FILETIME writeTime;
-	if (!GetFileTime(file, NULL, NULL, &writeTime)) {
-		printf("Could not get the last write time of the file: %s\n", path);
-	}
-	CloseHandle(file);
-
-	SYSTEMTIME time;
-	FileTimeToSystemTime(&writeTime, &time);
-	return (time_t)writeTime.dwLowDateTime;
-}*/
 
 time_t getFileTime(const char* path) {
 	struct _stat buffer;
@@ -154,82 +120,8 @@ bool isObjFileDirty(const char* path) {
 	return sourceTime > objTime;
 }
 
-void buildTarget(JSON_Object* target) {
-	TargetCompileData data;
-	const char* output = json_object_get_string(target, "output");
-
-	//Source and Object Files
-	JSON_Array* sourceFiles = json_object_get_array(target, "sources");
-	data.sourceFiles = new char*[json_array_get_count(sourceFiles)];
-	data.numSourceFiles = 0;
-	data.objFiles = new char*[json_array_get_count(sourceFiles)];
-	data.numObjFiles = 0;
-
-	for (int i = 0; i < json_array_get_count(sourceFiles); i++) {
-		const char* sourceFile = json_array_get_string(sourceFiles, i);
-		time_t t = getFileTime(sourceFile);
-		tm* tt = localtime(&t);
-		printTime(tt);
-		printf("\n");
-		
-		//Check to see if we should compile the source file, or just link with the obj file
-		if (isObjFileDirty(sourceFile)) {
-			data.sourceFiles[data.numSourceFiles] = (char*)sourceFile;
-			data.numSourceFiles++;
-		}
-		else {
-			data.objFiles[data.numObjFiles] = getObjFileName(sourceFile);
-			data.numObjFiles++;
-		}
+void buildProject(Project project) {
+	for (int i = 0; i < project.targets.len; i++) {
+		compileTarget(project.targets.data[i]);
 	}
-
-	for (int i = 0; i < data.numSourceFiles; i++) {
-		printf("%s\n", data.sourceFiles[i]);
-	}
-
-	//Include Dirs
-	JSON_Array* includeDirsJSON = json_object_get_array(target, "include");
-	data.includeDirs = new char*[json_array_get_count(includeDirsJSON)];
-	data.numIncludeDirs = 0;
-
-	for (int i = 0; i < json_array_get_count(includeDirsJSON); i++) {
-		data.includeDirs[data.numIncludeDirs] = (char*)json_array_get_string(includeDirsJSON, i);
-		data.numIncludeDirs++;
-	}
-
-	//Libs
-	JSON_Array* libsJSON = json_object_get_array(target, "libs");
-	data.libs = new char*[json_array_get_count(libsJSON)];
-	data.numLibs = 0;
-
-	for (int i = 0; i < json_array_get_count(libsJSON); i++) {
-		data.libs[data.numLibs] = (char*)json_array_get_string(libsJSON, i);
-		data.numLibs++;
-	}
-
-	compileTarget(data);
-}
-
-void buildProject() {
-
-	char* buffer;
-
-	JSON_Value* root;
-	root = json_parse_file("build.json");
-	JSON_Value_Type type = json_value_get_type(root);
-	JSON_Object* rootObj = json_value_get_object(root);
-	JSON_Array* targets = json_object_get_array(rootObj, "targets");
-
-	for (int i = 0; i < json_array_get_count(targets); i++) {
-		JSON_Value* target = json_array_get_value(targets, i);
-		//JSON_Object* target = json_array_get_object(targets, i);
-		if (json_value_get_type(target) == JSONObject) {
-			buildTarget(json_value_get_object(target));
-		}
-		else {
-			printf("Invalid build target!\n");
-		}
-	}
-
-	printf("Number of Targets: %i\n", json_array_get_count(targets));
 }

@@ -4,6 +4,13 @@
 #define __stdcall
 #endif
 
+enum LogLevel {
+	LOG_DEBUG,
+	LOG_INFO,
+	LOG_WARNING,
+	LOG_ERROR
+};
+
 struct AutoCompleteOption {
 	char* title;
 	char* desc;
@@ -79,6 +86,8 @@ typedef void(*RegisterAutocompleterFunc)(AutoComplete_Func, const char* fileExte
 typedef Global*(*GetGlobalDataFunc)(void);
 typedef int(*RegisterMenuFunc)(const char* name);
 typedef void(*RegisterMenuItemFunc)(int menuID, const char* name, Func onClick);
+typedef void(*LogFormatStringFunc)(const char* file, int line, LogLevel level, const char* formatStr, ...);
+
 
 struct Plugin_API {
 	RegisterColorizerFunc registerColorizer;
@@ -86,6 +95,7 @@ struct Plugin_API {
 	GetGlobalDataFunc getGlobalData;
 	RegisterMenuFunc registerMenu;
 	RegisterMenuItemFunc registerMenuItem;
+	LogFormatStringFunc logFunc;
 };
 
 typedef void(__stdcall *type_initPlugin)(Plugin_API);

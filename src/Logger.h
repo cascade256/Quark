@@ -2,13 +2,7 @@
 #include "tinycthread.h"
 #include <stdio.h>
 #include <cassert>
-
-enum LogLevel {
-	LOG_DEBUG,
-	LOG_INFO, 
-	LOG_WARNING,
-	LOG_ERROR
-};
+#include "PluginProtocol.h"
 
 void initLog(LogLevel level);
 void flushLog();

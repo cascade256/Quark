@@ -113,8 +113,25 @@ int main() {
 	nk_font_atlas_end(&atlas, nk_handle_id(glfw.ogl.font_tex), &glfw.ogl.null);
 	nk_init_default(g->ctx, &font->handle);
 	*/
+
+	char fontFile[1024];//The directory the program is in
+#ifdef _WIN32
+	GetModuleFileName(NULL, fontFile, 1024);
+	char* fileName = strrchr(fontFile, '\\');
+	strncpy(fileName, "\\DroidSansMono.ttf", 1024 - (fileName - fontFile));
+#elif __linux__
+	int len = readlink("/proc/self/exe", fontFile, 1024);
+	fontFile[len] = '\0';
+	char* fileName = strrchr(fontFile, '/');
+	strncpy(fileName, "/plugins/", 1024 - (fileName - fontFile));
+#else
+#error "Unsupported platform!"
+#endif
+
+	logI("Font File: %s\n", fontFile);
+
 	nk_glfw3_font_stash_begin(&atlas);
-	font = nk_font_atlas_add_from_file(atlas, "DroidSansMono.ttf", 16, NULL);
+	font = nk_font_atlas_add_from_file(atlas, fontFile, 16, NULL);
 	nk_glfw3_font_stash_end();
 	nk_style_set_font(g->ctx, &font->handle);
 

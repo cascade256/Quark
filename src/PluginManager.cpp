@@ -74,6 +74,7 @@ void loadPlugins() {
 	api.getGlobalData = getGlobals;
 	api.registerMenu = addMenu;
 	api.registerMenuItem = addMenuItem;
+	api.logFunc = logFormat;
 
 
 	char* pluginPath = new char[1024];
