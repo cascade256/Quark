@@ -4,46 +4,11 @@
 #include "Globals.h"
 
 
-void appendLine(TextBuffer* buffer, const TextLine* line) {
-	if (buffer->capacity == buffer->len) {
-		//No room for more lines, expand the buffer!
-		TextLine* oldLines = buffer->lines;
-		buffer->capacity += 10;
-		buffer->lines = new TextLine[buffer->capacity];
-		memcpy(buffer->lines, oldLines, buffer->len * sizeof(TextLine));
-		delete[] oldLines;
-	}
-	buffer->lines[buffer->len].text = new char[line->len];
-	buffer->lines[buffer->len].capacity = line->len;
-	buffer->lines[buffer->len].len = line->len;
-	buffer->lines[buffer->len].colors = new char[line->numGlyphs];
-	buffer->lines[buffer->len].numGlyphs = line->numGlyphs;
-	buffer->lines[buffer->len].colorCapacity = line->numGlyphs;
-	memcpy(buffer->lines[buffer->len].text, line->text, line->len * sizeof(char));
-	memcpy(buffer->lines[buffer->len].colors, line->colors, line->numGlyphs * sizeof(char));
-	buffer->len++;
-}
-
-void appendChar(TextLine* line, char c) {
-	//Increase the capacity if it is too small
-	if (line->capacity == line->len) {
-		char* oldText = line->text;
-		line->capacity = line->capacity * 2;
-		line->text = new char[line->capacity];
-		memcpy(line->text, oldText, line->len);
-		delete[] oldText;
-	}
-	if (line->colorCapacity == line->numGlyphs) {
-		char* oldColors = line->colors;
-		line->colorCapacity = line->colorCapacity * 2;
-		line->colors = new char[line->colorCapacity];
-		memcpy(line->colors, oldColors, line->numGlyphs);
-		delete[] oldColors;
-	}
-	line->text[line->len] = c;
-	line->colors[line->numGlyphs] = TOK_DEFAULT;
-	line->len++;
-	line->numGlyphs++;
+void appendLine(Array<TextLine>* lines, const TextLine* line) {
+	TextLine copy;
+	copy.text = arrayCopy(&line->text);
+	copy.colors = arrayCopy(&line->colors);
+	arrayAdd(lines, copy);
 }
 
 void jobbedOpenFile(void* path) {
@@ -60,41 +25,41 @@ void openFile(const char* path) {
 	}
 
 	//Fill in the new file info
-	TextBuffer buffer;
-	buffer.capacity = 10;
-	buffer.lines = new TextLine[buffer.capacity];
-	buffer.len = 0;
+	Array<TextLine> lines;
+	arrayInit(&lines);
 
 	TextLine temp;
-	temp.capacity = 1024;
-	temp.text = new char[temp.capacity];
-	temp.colorCapacity = 1024;
-	temp.colors = new char[temp.colorCapacity];
-	temp.numGlyphs = 0;
-	temp.len = 0;
+	arrayInit(&temp.text);
+	arrayInit(&temp.colors);
 
 	char c = fgetc(file);
 	while (c != EOF) {
 		if (c == '\n') {
-			appendChar(&temp, c);
-			appendLine(&buffer, &temp);
-			temp.len = 0;
-			temp.numGlyphs = 0;
+			arrayAdd(&temp.text, c);
+			arrayAdd(&temp.colors, (char)TOK_DEFAULT);
+			appendLine(&lines, &temp);
+			temp.text.len = 0;
+			temp.colors.len = 0;
 		}
 		else {
-			appendChar(&temp, c);
+			arrayAdd(&temp.text, c);
+			arrayAdd(&temp.colors, (char)TOK_DEFAULT);
 		}
 
 		c = fgetc(file);
 	}
-	appendLine(&buffer, &temp);
+	appendLine(&lines, &temp);
 
-	delete[] temp.text;
-	delete[] temp.colors;
+	for (int i = 0; i < lines.len; i++) {
+		assert(lines[i].colors.len == lines[i].text.len);
+	}
+
+	delete[] temp.text.data;
+	delete[] temp.colors.data;
 
 
 	MyOpenFile openFile;
-	openFile.edit.buffer = buffer;
+	openFile.edit.lines = lines;
 	int pathLen = strlen(path);
 	openFile.path = new char[pathLen + 1];
 	strncpy(openFile.path, path, pathLen + 1);
@@ -122,8 +87,8 @@ void openFile(const char* path) {
 	openFile.edit.undo.undo_char_point = 0;
 	openFile.edit.undo.redo_point = NK_TEXTEDIT_UNDOSTATECOUNT;
 	openFile.edit.undo.redo_char_point = NK_TEXTEDIT_UNDOCHARCOUNT;
-	openFile.edit.select_end.x = openFile.edit.select_start.x = openFile.edit.cursor.x = 0;
-	openFile.edit.select_end.y = openFile.edit.select_start.y = openFile.edit.cursor.y = 0;
+	openFile.edit.select_end.line = openFile.edit.select_start.line = openFile.edit.cursor.line = 0;
+	openFile.edit.select_end.col = openFile.edit.select_start.col = openFile.edit.cursor.col = 0;
 	openFile.edit.has_preferred_x = 0;
 	openFile.edit.preferred_x = 0;
 	openFile.edit.cursor_at_end_of_line = 0;
@@ -134,8 +99,8 @@ void openFile(const char* path) {
 	openFile.edit.scrollbar = nk_vec2(0, 0);
 	openFile.edit.colorTable = g->theme;
 
-	for (int i = 0; i < buffer.len; i++) {
-		assert(buffer.lines[i].len >= 0);
+	for (int i = 0; i < lines.len; i++) {
+		assert(lines.data[i].text.len >= 0);
 	}
 
 	const char* ext = &strrchr(fileName, '.')[1];
@@ -144,8 +109,8 @@ void openFile(const char* path) {
 		any_t value;
 		if (hashmap_get(g->colorizers, ext, &value) == MAP_OK) {
 			openFile.edit.colorize = (Colorize_Func)value;
-			for (int i = 0; i < openFile.edit.buffer.len; i++) {
-				openFile.edit.colorize(&openFile.edit.buffer, i);
+			for (int i = 0; i < openFile.edit.lines.len; i++) {
+				openFile.edit.colorize(&openFile.edit.lines, i);
 			}
 		}
 		else {
@@ -203,9 +168,9 @@ void saveFile(MyOpenFile* file) {
 	FILE* f;
 	f = fopen(file->path, "w");
 	if (f != NULL) {
-		TextBuffer buffer = file->edit.buffer;
-		for (int i = 0; i < buffer.len; i++) {
-			fwrite(buffer.lines[i].text, sizeof(char), buffer.lines[i].len, f);
+		Array<TextLine> lines = file->edit.lines;
+		for (int i = 0; i < lines.len; i++) {
+			fwrite(lines.data[i].text.data, sizeof(char), lines.data[i].text.len, f);
 		}
 		fclose(f);
 		file->unsaved = false;
@@ -215,17 +180,17 @@ void saveFile(MyOpenFile* file) {
 	}
 }
 
-void destroyTextBuffer(TextBuffer* buffer) {
-	for (int i = 0; i < buffer->len; i++) {
-		delete[] buffer->lines[i].text;
-		delete[] buffer->lines[i].colors;
+void destroyTextBuffer(Array<TextLine>* lines) {
+	for (int i = 0; i < lines->len; i++) {
+		delete[] lines->data[i].text.data;
+		delete[] lines->data[i].colors.data;
 	}
-	delete[] buffer->lines;
+	delete[] lines->data;
 }
 
 void destroyFiles(OpenFiles* files) {
 	for (int i = 0; i < files->len; i++) {
-		destroyTextBuffer(&files->openFiles[i].edit.buffer);
+		destroyTextBuffer(&files->openFiles[i].edit.lines);
 		delete[] files->openFiles[i].path;
 		delete[] files->openFiles[i].name;
 	}

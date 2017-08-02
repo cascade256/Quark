@@ -16,7 +16,7 @@ static char lastSearch[MAX_SEARCH_LEN];
 
 
 struct SearchArgs {
-	const TextBuffer* buffer;
+	const Array<TextLine>* lines;
 	const char* str;
 	int strLen;
 };
@@ -47,8 +47,8 @@ bool drawFindDialog(MyOpenFile* file, struct nk_vec2 pos) {
 					if (currentMatch == numMatches) {
 						currentMatch = 0;
 					}
-					file->edit.cursor.x = matches[currentMatch].line;
-					file->edit.cursor.y = matches[currentMatch].col;
+					file->edit.cursor.line = matches[currentMatch].line;
+					file->edit.cursor.col = matches[currentMatch].col;
 					file->edit.cursorMoved = true;
 				}
 			}
@@ -56,7 +56,7 @@ bool drawFindDialog(MyOpenFile* file, struct nk_vec2 pos) {
 				//If it has, update lastSearch and rerun the search
 				strncpy(lastSearch, searchString, MAX_SEARCH_LEN);
 				SearchArgs* args = new SearchArgs();
-				args->buffer = &file->edit.buffer;
+				args->lines = &file->edit.lines;
 				args->str = searchString;
 				args->strLen = used;
 				searchIsDirty = true;
@@ -78,7 +78,7 @@ bool drawFindDialog(MyOpenFile* file, struct nk_vec2 pos) {
 
 
 
-void search(const TextBuffer* buffer, const char* str, const int strLen) {
+void search(const Array<TextLine>* lines, const char* str, const int strLen) {
 	numMatches = 0;
 	matchesCapacity = 10;
 	if (matches != NULL) {
@@ -86,13 +86,13 @@ void search(const TextBuffer* buffer, const char* str, const int strLen) {
 	}
 	matches = new TextPos[matchesCapacity];
 
-	for (int i = 0; i < buffer->len; i++) {
+	for (int i = 0; i < lines->len; i++) {
 		int x = 0;
-		TextLine* line = &buffer->lines[i];
-		while (x < line->len) {
-			if (line->text[x] == str[0]) {
+		TextLine* line = &lines->data[i];
+		while (x < line->text.len) {
+			if (line->text.data[x] == str[0]) {
 				int j = 0;
-				while (line->text[x] == str[j]) {
+				while (line->text.data[x] == str[j]) {
 					//Check to see if we are at the end of the string
 					if (j == strLen - 1) {
 						//We found a match!
@@ -122,6 +122,6 @@ void search(const TextBuffer* buffer, const char* str, const int strLen) {
 
 void jobbedSearch(void* args) {
 	SearchArgs* sa = (SearchArgs*)args;
-	search(sa->buffer, sa->str, sa->strLen);
+	search(sa->lines, sa->str, sa->strLen);
 	delete sa;
 }

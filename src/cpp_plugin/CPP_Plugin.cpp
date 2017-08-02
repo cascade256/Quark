@@ -74,22 +74,22 @@ extern "C" {
 		return i;
 	}
 
-	void colorize(TextBuffer* buffer, int editedLine) {
-		TextLine* line = &buffer->lines[editedLine];
+	void colorize(Array<TextLine>* lines, int editedLine) {
+		TextLine* line = &lines->data[editedLine];
 		int i = 0;
-		while (i < line->len) {
+		while (i < line->text.len) {
 			TokenType tok = TOK_DEFAULT;
 			int tokStart = i;
-			char c = line->text[i];
+			char c = line->text.data[i];
 			if (isWhitespace(c)) {
-				i = parseWhitespace(line->text, i, line->len);
+				i = parseWhitespace(line->text.data, i, line->text.len);
 			}
 			else if (isNumber(c)) {
-				i = parseNumber(line->text, i, line->len);
+				i = parseNumber(line->text.data, i, line->text.len);
 				tok = TOK_NUMBER;
 			}
 			else if (isLetter(c)) {
-				i = parseIdentifier(line->text, i, line->len);
+				i = parseIdentifier(line->text.data, i, line->text.len);
 
 				/*
 								for(int j = tokStart; j < i; j++) {
@@ -117,7 +117,7 @@ extern "C" {
 
 					for (int k = tokStart; k < i; k++) {
 						//printf("%c == %c?\n", line->text[k], keywords[j][k - tokStart]);
-						if (line->text[k] != keywords[j][k - tokStart]) {
+						if (line->text.data[k] != keywords[j][k - tokStart]) {
 							isKeyword = false;
 							break;
 						}
@@ -136,11 +136,11 @@ extern "C" {
 
 			}
 			else if (c == '"') {
-				i = parseString(line->text, i + 1, line->len);
+				i = parseString(line->text.data, i + 1, line->text.len);
 				tok = TOK_STRING;
 			}
-			else if (c == '/' && line->text[i + 1] == '/') {
-				i = line->len;
+			else if (c == '/' && line->text.data[i + 1] == '/') {
+				i = line->text.len;
 				tok = TOK_COMMENT;
 			}
 			else {
@@ -148,7 +148,7 @@ extern "C" {
 				tok = TOK_DEFAULT;
 			}
 			for (int j = tokStart; j < i; j++) {
-				line->colors[j] = tok;
+				line->colors.data[j] = tok;
 			}
 		}
 	}

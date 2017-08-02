@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Array.h"
 #ifndef _WIN32
 #define __stdcall
 #endif
@@ -36,22 +36,12 @@ enum TokenType {
 
 
 struct TextLine {
-	char* text;
-	int len;
-	int capacity;
-	char* colors;//One color per glyph, each glyph could require multiple bytes
-	int colorCapacity; //the size of the colors array
-	int numGlyphs;// The number of glyphs in this line, and also the length of colors
+	Array<char> text;
+	Array<char> colors;//One color per glyph, each glyph could require multiple bytes
 };
 
-struct TextBuffer {
-	TextLine* lines;
-	int len;
-	int capacity;
-};
-
-typedef void(*Colorize_Func)(TextBuffer* buffer, int editedLine);
-typedef void(*AutoComplete_Func)(AutoCompleteData* data, TextBuffer* buffer);
+typedef void(*Colorize_Func)(Array<TextLine>* buffer, int editedLine);
+typedef void(*AutoComplete_Func)(AutoCompleteData* data, Array<TextLine>* buffer);
 
 struct PluginInfo {
 	char name[1024];

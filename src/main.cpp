@@ -48,10 +48,10 @@ void jobsTest() {
 }
 
 void printActiveFile() {
-	TextBuffer* b = &g->files.openFiles[g->activeFileIndex].edit.buffer;
-	for (int i = 0; i < b->len; i++) {
-		for (int j = 0; j < b->lines[i].len; j++) {
-			putchar(b->lines[i].text[j]);
+	Array<TextLine> b = g->files.openFiles[g->activeFileIndex].edit.lines;
+	for (int i = 0; i < b.len; i++) {
+		for (int j = 0; j < b[i].text.len; j++) {
+			putchar(b[i].text[j]);
 		}
 	}
 }

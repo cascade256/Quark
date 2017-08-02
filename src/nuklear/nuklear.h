@@ -1654,10 +1654,13 @@ struct nk_my_vec2i {
 	int x;
 	int y;
 };
-struct TextBuffer;
+
+
+struct TextCursor;
+struct TextLine;
 
 typedef void(*nk_my_plugin_paste)(nk_handle, struct nk_my_text_edit*);
-typedef void(*nk_my_plugin_copy)(nk_handle, TextBuffer*, nk_my_vec2i start, nk_my_vec2i end);
+typedef void(*nk_my_plugin_copy)(nk_handle, TextLine*, int numLines, TextCursor start, TextCursor end);
 
 struct nk_my_text_edit;
 struct nk_my_clipboard {

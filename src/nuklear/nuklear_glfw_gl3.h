@@ -493,27 +493,27 @@ nk_glfw3_clipbard_paste(nk_handle usr, struct nk_text_edit *edit)
 }
 
 NK_INTERN void
-nk_glfw3_my_clipbard_copy(nk_handle usr, TextBuffer* buffer, nk_my_vec2i start, nk_my_vec2i end)
+nk_glfw3_my_clipbard_copy(nk_handle usr, TextLine* lines, int numLines, TextCursor start, TextCursor end)
 {
     char *str = 0;
     (void)usr;
 	int len = 0;
-	int startByte = nk_my_bytes_to_glyph(&buffer->lines[start.x], start.y);
-	int endByte = nk_my_bytes_to_glyph(&buffer->lines[end.x], end.y);
-	if (start.x == end.x) {
+	int startByte = nk_my_bytes_to_glyph(&lines[start.line], start.col);
+	int endByte = nk_my_bytes_to_glyph(&lines[end.line], end.col);
+	if (start.line == end.line) {
 		len = endByte - startByte;
 		str = (char*)malloc((size_t)len + 1);
 		if (!str) return;
-		memcpy(str, &buffer->lines[start.x].text[startByte], (size_t)len);
+		memcpy(str, &lines[start.line].text[startByte], (size_t)len);
 		str[len] = '\0';
 		glfwSetClipboardString(glfw.win, str);
 		free(str);
 	}
 	else {
-		len = buffer->lines[start.x].len - startByte;
+		len = lines[start.line].text.len - startByte;
 		len++;//For the \n
-		for (int i = start.x + 1; i < end.x; i++) {
-			len += buffer->lines[i].len;
+		for (int i = start.line + 1; i < end.line; i++) {
+			len += lines[i].text.len;
 			len++; //For the \n
 		}
 		len += endByte;
@@ -522,21 +522,21 @@ nk_glfw3_my_clipbard_copy(nk_handle usr, TextBuffer* buffer, nk_my_vec2i start, 
 		if (!str) return;
 
 		int offset = 0;
-		int copyLen = buffer->lines[start.x].len - startByte;
-		memcpy(str, &buffer->lines[start.x].text[startByte], copyLen);
+		int copyLen = lines[start.line].text.len - startByte;
+		memcpy(str, &lines[start.line].text[startByte], copyLen);
 		offset += copyLen;
 		str[offset] = '\n';
 		offset++;
-		for (int i = start.x + 1; i < end.x; i++) {
-			copyLen = buffer->lines[i].len;
-			printf("Stuff: %s\n", buffer->lines[i].text);
-			memcpy(&str[offset], buffer->lines[i].text, copyLen);
+		for (int i = start.line + 1; i < end.line; i++) {
+			copyLen = lines[i].text.len;
+			printf("Stuff: %s\n", lines[i].text.data);
+			memcpy(&str[offset], lines[i].text.data, copyLen);
 			offset += copyLen;
 			str[offset] = '\n';
 			offset++;
 		}
 		copyLen = endByte;
-		memcpy(str + offset, buffer->lines[end.x].text, copyLen);
+		memcpy(str + offset, lines[end.line].text.data, copyLen);
 		offset += copyLen;
 		str[offset] = '\0';
 		glfwSetClipboardString(glfw.win, str);
