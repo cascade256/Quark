@@ -163,6 +163,14 @@ void openFile(const char* path) {
 }
 
 void saveFile(MyOpenFile* file) {
+	Array<TextLine>* lines = &file->edit.lines;
+	for (int i = 0; i < lines->len; i++) {
+		if (lines->data[i].text[lines->data[i].text.len - 1] != '\n') {
+			logW("Line %i of the buffer does not end with a new line char! Adding one.\n", i);
+			arrayAdd(&lines->data[i].text, '\n');
+			arrayAdd(&lines->data[i].colors, (char)TOK_DEFAULT);
+		}
+	}
 	//assert(false);
 	//return;
 	FILE* f;
