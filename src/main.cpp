@@ -26,11 +26,12 @@
 #include "JobManager.h"
 #include "MainMenu.h"
 #include "Logger.h"
-
+#include "LayoutManager.h"
 #include "Array.h"
 
 
 Global* g;
+FileTreeItem fileTree;
 
 void keyHandler(GLFWwindow* win, int key, int scancode, int action, int mods);
 
@@ -72,6 +73,15 @@ void arrayTest() {
 	for (int i = 0; i < nums.len; i++) {
 		logD("ArrayTest: nums[%i] = %i \n", i, nums.data[i]);
 	}
+}
+
+
+void drawFileTree() {
+	drawFileTree(g->ctx, &fileTree, &g->files);
+}
+
+void drawTextEditor() {
+	drawTextEditor(g->ctx, &g->files);
 }
 
 int main() {
@@ -118,7 +128,7 @@ int main() {
 #ifdef _WIN32
 	GetModuleFileName(NULL, fontFile, 1024);
 	char* fileName = strrchr(fontFile, '\\');
-	strncpy(fileName, "\\DroidSansMono.ttf", 1024 - (fileName - fontFile));
+	strncpy(fileName, "\\Code New Roman.ttf", 1024 - (fileName - fontFile));
 #elif __linux__
 	int len = readlink("/proc/self/exe", fontFile, 1024);
 	fontFile[len] = '\0';
@@ -143,7 +153,7 @@ int main() {
 	nk_textedit_init_default(&edit);
 	nk_textedit_text(&edit, mem, 1024);
 
-	FileTreeItem fileTree;
+
 	char* path = new char[1024];
 #ifdef _WIN32
 	GetCurrentDirectory(1024, path);
@@ -177,6 +187,9 @@ int main() {
 	g->ctx->style.edit.selected_normal.a = 200;
 	g->ctx->style.edit.selected_normal.b = 200;
 
+	//initLayout();
+	View* view = createVerticalSplitView(createView(drawMainMenu, "Main Menu"), (createView(drawFileTree, "File Tree"), createView(drawTextEditor, "Text Editor")));
+
 	arrayTest();
 
 	//glfwWindowShouldClose can be set from within nuklear_glfw_gl3.h keypress handler
@@ -188,7 +201,10 @@ int main() {
 		int height;
 		glfwGetWindowSize(g->win, &width, &height);
 
-
+		//nk_begin(g->ctx, "TEST", nk_rect(0, 0, width, height), NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR);
+		drawLayout(view, width, height);
+		//nk_end(g->ctx);
+#ifdef ALSJKDFH
 		if (nk_begin(g->ctx, "Demo", nk_rect(0, 0, width, height),
 			NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR)) {
 
@@ -245,8 +261,10 @@ int main() {
 
 
 			drawTextEditor(g->ctx, &g->files);
+			
 		}
 		nk_end(g->ctx);
+#endif
 
 
 		//overview(g->ctx);
