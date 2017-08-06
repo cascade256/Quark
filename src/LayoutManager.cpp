@@ -5,8 +5,12 @@ struct View;
 
 enum ViewType {
 	VIEW_SINGLE,
-	VIEW_SPLIT_HORIZONTAL,
-	VIEW_SPLIT_VERTICAL
+	VIEW_SPLIT_HORIZONTAL_PERCENTAGE,//The split between the two views is based on a percentage i.e. 50% for the left view %50 for the right view
+	VIEW_SPLIT_HORIZONTAL_PIXEL_LEFT,//The pixel based left split is where the width of the left view is specified, and the rest is for the right view
+	VIEW_SPLIT_HORIZONTAL_PIXEL_RIGHT,
+	VIEW_SPLIT_VERTICAL_PERCENTAGE,
+	VIEW_SPLIT_VERTICAL_PIXEL_TOP,
+	VIEW_SPLIT_VERTICAL_PIXEL_BOTTOM
 };
 
 struct ViewSingle {
@@ -14,43 +18,25 @@ struct ViewSingle {
 	LayoutFunc draw;
 };
 
-struct ViewSplitHorizontal {
-	View* left;
-	View* right;
-};
-
-struct ViewSplitVertical {
-	View* top;
-	View* bottom;
+struct ViewSplit {
+	View* view1;
+	View* view2;
 };
 
 struct View {
 	ViewType type;
 	union {
 		ViewSingle single;
-		ViewSplitHorizontal horizontal;
-		ViewSplitVertical vertical;
+		ViewSplit  split;
+	};
+	union {
+		int pixelSplit;
+		float percentageSplit;
 	};
 };
-
+ 
 
 static View root;
-
-View* createHorizontalSplitView(View* left, View* right) {
-	View* view = new View();
-	view->type = VIEW_SPLIT_HORIZONTAL;
-	view->horizontal.left = left;
-	view->horizontal.right = right;
-	return view;
-}
-
-View* createVerticalSplitView(View* top, View* bottom) {
-	View* view = new View();
-	view->type = VIEW_SPLIT_VERTICAL;
-	view->vertical.top = top;
-	view->vertical.bottom = bottom;
-	return view;
-}
 
 View* createView(LayoutFunc draw, char* title) {
 	View* view = new View();
@@ -59,64 +45,115 @@ View* createView(LayoutFunc draw, char* title) {
 	return view;
 }
 
-
-void layoutTestDraw() {
-	struct nk_rect region = nk_window_get_content_region(g->ctx);
-	//nk_layout_row_begin(g->ctx, NK_STATIC, region.h, 2);
-	nk_layout_row_dynamic(g->ctx, 100, 2);
-	nk_button_text(g->ctx, "Hallo world!", 12);
-	nk_button_text(g->ctx, "Hello world!", 12);
-	//nk_layout_row_end(g->ctx);
-
+View* createSplitViewPercentage(View* view1, View* view2, bool isVertical, float percentage) {
+	View* view = new View();
+	if (isVertical) {
+		view->type = VIEW_SPLIT_VERTICAL_PERCENTAGE;
+	}
+	else {
+		view->type = VIEW_SPLIT_HORIZONTAL_PERCENTAGE;
+	}
+	view->split.view1 = view1;
+	view->split.view2 = view2;
+	view->percentageSplit = percentage;
+	return view;
 }
 
-void initLayout() {
-	View* fileTreeView = new View();
-	fileTreeView->type = VIEW_SINGLE;
-	fileTreeView->single.draw = layoutTestDraw;
-	fileTreeView->single.title = "File Tree";
-
-	View* textEditorView = new View();
-	textEditorView->type = VIEW_SINGLE;
-	textEditorView->single.draw = layoutTestDraw;
-	textEditorView->single.title = "Text Editor";
-
-	root.type = VIEW_SPLIT_VERTICAL;
-	root.vertical.top = fileTreeView;
-	root.vertical.bottom = textEditorView;
+View* createSplitViewPixel(View* view1, View* view2, bool isVertical, bool isFirstViewLimited, int pixels) {
+	View* view = new View();
+	if (isVertical) {
+		if (isFirstViewLimited) {
+			view->type = VIEW_SPLIT_VERTICAL_PIXEL_TOP;
+		}
+		else {
+			view->type = VIEW_SPLIT_VERTICAL_PIXEL_BOTTOM;
+		}
+	}
+	else {
+		if (isFirstViewLimited) {
+			view->type = VIEW_SPLIT_HORIZONTAL_PIXEL_LEFT;
+		}
+		else {
+			view->type = VIEW_SPLIT_HORIZONTAL_PIXEL_RIGHT;
+		}
+	}
+	view->split.view1 = view1;
+	view->split.view2 = view2;
+	view->pixelSplit = pixels;
+	return view;
 }
 
-void drawLayoutRecursively(const View* view, struct nk_rect area) {
-	switch (view->type) {
-	case VIEW_SINGLE:
-	{
-		nk_begin(g->ctx, view->single.title, area, NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR);
+void drawLayoutRecursively(const View* view, struct nk_rect totalArea) {
+	if (view->type == VIEW_SINGLE) {
+		nk_begin(g->ctx, view->single.title, totalArea, NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR);
 		view->single.draw();
 		nk_end(g->ctx);
-		break;
 	}
-	case VIEW_SPLIT_HORIZONTAL:
-	{
-		if (abs(g->ctx->input.mouse.pos.x - area.x - area.w / 2) < 5) {
-			//logD("The mouse is close the a horizontal line!\n");
+	else {
+		struct nk_rect area1;
+		struct nk_rect area2;
+
+		//Deal with horizontal splits
+		if (view->type == VIEW_SPLIT_HORIZONTAL_PERCENTAGE ||
+			view->type == VIEW_SPLIT_HORIZONTAL_PIXEL_LEFT ||
+			view->type == VIEW_SPLIT_HORIZONTAL_PIXEL_RIGHT) {
+
+			float split;
+
+			if (view->type == VIEW_SPLIT_HORIZONTAL_PERCENTAGE) {
+				split = totalArea.w * view->percentageSplit;
+			}
+			else if (view->type == VIEW_SPLIT_HORIZONTAL_PIXEL_LEFT) {
+				split = view->pixelSplit;
+			}
+			else if (view->type == VIEW_SPLIT_HORIZONTAL_PIXEL_RIGHT) {
+				split = totalArea.w - view->pixelSplit;
+			}
+
+			area1.h = totalArea.h;
+			area1.y = totalArea.y;
+			area1.x = totalArea.x;
+			area1.w = split;
+
+			area2.h = totalArea.h;
+			area2.y = totalArea.y;
+			area2.x = totalArea.x + split;
+			area2.w = totalArea.w - split;
+
 		}
-		drawLayoutRecursively(view->horizontal.left, nk_rect(area.x, area.y, area.w / 2, area.h));
-		drawLayoutRecursively(view->horizontal.right, nk_rect(area.x + area.w / 2, area.y, area.w / 2, area.h));
-		break;
-	}	
-	case VIEW_SPLIT_VERTICAL:
-	{
-		if (abs(g->ctx->input.mouse.pos.y - area.y - area.h / 2) < 5) {
-			//logD("The mouse is close the a vertical line!\n");
+		else if (view->type == VIEW_SPLIT_VERTICAL_PERCENTAGE ||
+			view->type == VIEW_SPLIT_VERTICAL_PIXEL_TOP ||
+			view->type == VIEW_SPLIT_VERTICAL_PIXEL_BOTTOM) {
+
+			float split;
+
+			if (view->type == VIEW_SPLIT_VERTICAL_PERCENTAGE) {
+				split = totalArea.w * view->percentageSplit;
+			}
+			else if (view->type == VIEW_SPLIT_VERTICAL_PIXEL_TOP) {
+				split = view->pixelSplit;
+			}
+			else if (view->type == VIEW_SPLIT_VERTICAL_PIXEL_BOTTOM) {
+				split = totalArea.w - view->pixelSplit;
+			}
+
+			area1.h = split;
+			area1.y = totalArea.y;
+			area1.x = totalArea.x;
+			area1.w = totalArea.w;
+
+			area2.h = totalArea.h - split;
+			area2.y = totalArea.y + split;
+			area2.x = totalArea.x;
+			area2.w = totalArea.w;
 		}
-		drawLayoutRecursively(view->vertical.top, nk_rect(area.x, area.y, area.w, area.h / 2));
-		drawLayoutRecursively(view->vertical.bottom, nk_rect(area.x, area.y + area.h / 2, area.w, area.h / 2));
-		break;
-	}
-	default:
-		logE("Unknown view type!\n");
-		assert(false);
-		break;
+		else {
+			logE("Unknown view type!\n");
+			assert(false);
+		}
+
+		drawLayoutRecursively(view->split.view1, area1);
+		drawLayoutRecursively(view->split.view2, area2);
 	}
 }
 

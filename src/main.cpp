@@ -77,10 +77,19 @@ void arrayTest() {
 
 
 void drawFileTree() {
-	drawFileTree(g->ctx, &fileTree, &g->files);
+
+	nk_layout_row_dynamic(g->ctx, nk_window_get_content_region(g->ctx).h, 1);
+	//nk_button_text(g->ctx, "File tree button!", 17);
+	if (nk_group_begin(g->ctx, "Files", NK_WINDOW_BORDER))
+	{
+		drawFileTree(g->ctx, &fileTree, &g->files);
+		nk_group_end(g->ctx);
+	}
 }
 
 void drawTextEditor() {
+	nk_layout_row_dynamic(g->ctx, nk_window_get_content_region(g->ctx).h, 1);
+	//nk_button_text(g->ctx, "Text editor button!", 19);
 	drawTextEditor(g->ctx, &g->files);
 }
 
@@ -186,9 +195,8 @@ int main() {
 
 	g->ctx->style.edit.selected_normal.a = 200;
 	g->ctx->style.edit.selected_normal.b = 200;
-
 	//initLayout();
-	View* view = createVerticalSplitView(createView(drawMainMenu, "Main Menu"), (createView(drawFileTree, "File Tree"), createView(drawTextEditor, "Text Editor")));
+	View* view = createSplitViewPixel(createView(drawMainMenu, "Main Menu"), createSplitViewPixel(createView(drawFileTree, "File Tree"), createView(drawTextEditor, "Text Editor"), false, true, 300), true, true, 30);
 
 	arrayTest();
 
