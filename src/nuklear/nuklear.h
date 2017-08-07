@@ -2634,6 +2634,7 @@ struct nk_style {
     const struct nk_user_font *font;
     const struct nk_cursor *cursors[NK_CURSOR_COUNT];
     const struct nk_cursor *cursor_active;
+	nk_style_cursor cursor_type;
     struct nk_cursor *cursor_last;
     int cursor_visible;
 
@@ -16087,6 +16088,7 @@ nk_style_set_cursor(struct nk_context *ctx, enum nk_style_cursor c)
     NK_ASSERT(ctx);
     if (!ctx) return 0;
     style = &ctx->style;
+	style->cursor_type = c;
     if (style->cursors[c]) {
         style->cursor_active = style->cursors[c];
         return 1;
@@ -16332,7 +16334,8 @@ nk_clear(struct nk_context *ctx)
     ctx->build = 0;
     ctx->memory.calls = 0;
     ctx->last_widget_state = 0;
-    ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_ARROW];
+    //ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_ARROW];
+	nk_style_set_cursor(ctx, NK_CURSOR_ARROW);
     NK_MEMSET(&ctx->overlay, 0, sizeof(ctx->overlay));
 #ifdef NK_INCLUDE_VERTEX_BUFFER_OUTPUT
     nk_draw_list_clear(&ctx->draw_list);
@@ -16498,7 +16501,9 @@ nk_build(struct nk_context *ctx)
 
     /* draw cursor overlay */
     if (!ctx->style.cursor_active)
-        ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_ARROW];
+		nk_style_set_cursor(ctx, NK_CURSOR_ARROW);
+        //ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_ARROW];
+
     if (ctx->style.cursor_active && !ctx->input.mouse.grabbed && ctx->style.cursor_visible) {
         struct nk_rect mouse_bounds;
         const struct nk_cursor *cursor = ctx->style.cursor_active;
@@ -16709,7 +16714,8 @@ nk_panel_begin(struct nk_context *ctx, const char *title, enum nk_panel_type pan
             win->bounds.y = win->bounds.y + in->mouse.delta.y;
             in->mouse.buttons[NK_BUTTON_LEFT].clicked_pos.x += in->mouse.delta.x;
             in->mouse.buttons[NK_BUTTON_LEFT].clicked_pos.y += in->mouse.delta.y;
-            ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_MOVE];
+            //ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_MOVE];
+			nk_style_set_cursor(ctx, NK_CURSOR_MOVE);
         }
     }
 
@@ -17119,7 +17125,8 @@ nk_panel_end(struct nk_context *ctx)
                 /* dragging in y-direction is only possible if static window */
                 if (!(layout->flags & NK_WINDOW_DYNAMIC))
                     window->bounds.h = NK_MAX(window_size.y, window->bounds.h + in->mouse.delta.y);
-                ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_RESIZE_TOP_RIGHT_DOWN_LEFT];
+                //ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_RESIZE_TOP_RIGHT_DOWN_LEFT];
+				nk_style_set_cursor(ctx, NK_CURSOR_RESIZE_TOP_RIGHT_DOWN_LEFT);
                 in->mouse.buttons[NK_BUTTON_LEFT].clicked_pos.x = scaler.x + in->mouse.delta.x + scaler.w/2.0f;
                 in->mouse.buttons[NK_BUTTON_LEFT].clicked_pos.y = scaler.y + in->mouse.delta.y + scaler.h/2.0f;
             }
@@ -20167,7 +20174,8 @@ nk_edit_buffer(struct nk_context *ctx, nk_flags flags,
                     filter, edit, &style->edit, in, style->font);
 
     if (ctx->last_widget_state & NK_WIDGET_STATE_HOVER)
-        ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_TEXT];
+		nk_style_set_cursor(ctx, NK_CURSOR_TEXT);
+        //ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_TEXT];
     if (edit->active && prev_state != edit->active) {
         /* current edit is now hot */
         win->edit.active = nk_true;

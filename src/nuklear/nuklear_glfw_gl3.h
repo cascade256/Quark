@@ -102,6 +102,8 @@ static struct nk_glfw {
 	double lastLeftClickTime = -1;
 	int lastLeftClickX;
 	int lastLeftClickY;
+	nk_style_cursor activeCursor;
+	GLFWcursor* cursors[NK_CURSOR_COUNT];
 
 } glfw;
 
@@ -192,6 +194,16 @@ nk_glfw3_device_create(void)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+	//Create cursors
+	{
+		glfw.cursors[NK_CURSOR_RESIZE_HORIZONTAL] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
+		glfw.cursors[NK_CURSOR_RESIZE_VERTICAL] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
+		glfw.cursors[NK_CURSOR_TEXT] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
+		glfw.cursors[NK_CURSOR_ARROW] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+		glfw.activeCursor = NK_CURSOR_ARROW;
+	}
+
 }
 
 NK_INTERN void
@@ -224,6 +236,11 @@ nk_glfw3_device_destroy(void)
 NK_API void
 nk_glfw3_render(enum nk_anti_aliasing AA, int max_vertex_buffer, int max_element_buffer)
 {
+	if (glfw.ctx.style.cursor_type != glfw.activeCursor) {
+		glfw.activeCursor = glfw.ctx.style.cursor_type;
+		glfwSetCursor(glfw.win, glfw.cursors[glfw.activeCursor]);
+	}
+
     struct nk_glfw_device *dev = &glfw.ogl;
     GLfloat ortho[4][4] = {
         {2.0f, 0.0f, 0.0f, 0.0f},

@@ -83,7 +83,7 @@ View* createSplitViewPixel(View* view1, View* view2, bool isVertical, bool isFir
 	return view;
 }
 
-void drawLayoutRecursively(const View* view, struct nk_rect totalArea) {
+void drawLayoutRecursively(View* view, struct nk_rect totalArea) {
 	if (view->type == VIEW_SINGLE) {
 		nk_begin(g->ctx, view->single.title, totalArea, NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR);
 		view->single.draw();
@@ -108,6 +108,25 @@ void drawLayoutRecursively(const View* view, struct nk_rect totalArea) {
 			}
 			else if (view->type == VIEW_SPLIT_HORIZONTAL_PIXEL_RIGHT) {
 				split = totalArea.w - view->pixelSplit;
+			}
+
+			if (abs(g->ctx->input.mouse.pos.x - split - totalArea.x) < 5) {
+				g->ctx->style.cursor_type = NK_CURSOR_RESIZE_HORIZONTAL;
+				if (nk_input_is_mouse_down(&g->ctx->input, NK_BUTTON_LEFT)) {
+					float delta_x = g->ctx->input.mouse.delta.x;
+
+					if (view->type == VIEW_SPLIT_HORIZONTAL_PERCENTAGE) {
+						view->percentageSplit = (g->ctx->input.mouse.pos.x - totalArea.x) / totalArea.w;
+					}
+					else if (view->type == VIEW_SPLIT_HORIZONTAL_PIXEL_LEFT) {
+						view->pixelSplit = g->ctx->input.mouse.pos.x - totalArea.x;
+					}
+					else if (view->type == VIEW_SPLIT_HORIZONTAL_PIXEL_RIGHT) {
+						view->pixelSplit = totalArea.w - (g->ctx->input.mouse.pos.x - totalArea.x);
+					}
+					g->ctx->input.mouse.buttons[NK_BUTTON_LEFT].clicked_pos.x = split - totalArea.x;
+					g->ctx->input.mouse.buttons[NK_BUTTON_LEFT].clicked_pos.y = g->ctx->input.mouse.pos.y;
+				}
 			}
 
 			area1.h = totalArea.h;
@@ -135,6 +154,25 @@ void drawLayoutRecursively(const View* view, struct nk_rect totalArea) {
 			}
 			else if (view->type == VIEW_SPLIT_VERTICAL_PIXEL_BOTTOM) {
 				split = totalArea.w - view->pixelSplit;
+			}
+
+			if ( abs(g->ctx->input.mouse.pos.y - split - totalArea.y) < 5) {
+				g->ctx->style.cursor_type = NK_CURSOR_RESIZE_VERTICAL;
+				if (nk_input_is_mouse_down(&g->ctx->input, NK_BUTTON_LEFT)) {
+					float delta_y = g->ctx->input.mouse.delta.y;
+
+					if (view->type == VIEW_SPLIT_VERTICAL_PERCENTAGE) {
+						view->percentageSplit = (g->ctx->input.mouse.pos.y - totalArea.y) / totalArea.h;
+					}
+					else if (view->type == VIEW_SPLIT_VERTICAL_PIXEL_TOP) {
+						view->pixelSplit = g->ctx->input.mouse.pos.y - totalArea.y;
+					}
+					else if (view->type == VIEW_SPLIT_VERTICAL_PIXEL_BOTTOM) {
+						view->pixelSplit = totalArea.h - (g->ctx->input.mouse.pos.y - totalArea.y);
+					}
+					g->ctx->input.mouse.buttons[NK_BUTTON_LEFT].clicked_pos.y = split - totalArea.y;
+					g->ctx->input.mouse.buttons[NK_BUTTON_LEFT].clicked_pos.x = g->ctx->input.mouse.pos.x;
+				}
 			}
 
 			area1.h = split;
