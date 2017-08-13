@@ -14,7 +14,8 @@ void drawAutocompleteDialog(struct nk_vec2 pos, AutoCompleteData* data, bool* ac
 		*active = false;
 		return;
 	}
-
+	assert(false);
+	/*!Refactor
 	if (nk_my_popup_begin(g->ctx, popup, NK_POPUP_DYNAMIC, "Autocomplete", NK_WINDOW_NO_SCROLLBAR, area)) {
 
 		for (int i = 0; i < data->numOptions; i++) {
@@ -23,6 +24,7 @@ void drawAutocompleteDialog(struct nk_vec2 pos, AutoCompleteData* data, bool* ac
 		}
 		nk_my_popup_end(g->ctx);
 	}
+	*/
 
 }
 

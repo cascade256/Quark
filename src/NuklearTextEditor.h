@@ -1144,7 +1144,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 
 		//Scrolling
 		{
-			edit->scrollbar.y -= in->mouse.scroll_delta * 20;
+			edit->scrollbar.y -= in->mouse.scroll_delta.y * 20;
 			if (edit->scrollbar.y < 0) {
 				edit->scrollbar.y = 0;
 			}

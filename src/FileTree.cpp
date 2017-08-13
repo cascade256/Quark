@@ -114,9 +114,7 @@ void drawFileTree(nk_context* ctx, FileTreeItem* tree, OpenFiles* files) {
 	if (!isDir) {
 		struct nk_rect bounds = nk_widget_bounds(ctx);
 		nk_selectable_label(ctx, tree->name, NK_TEXT_LEFT, &tree->selected);
-		if ((nk_input_is_mouse_hovering_rect(&ctx->input, bounds) ||
-			nk_input_is_mouse_prev_hovering_rect(&ctx->input, bounds)) &&
-			nk_input_is_mouse_down(&ctx->input, NK_BUTTON_DOUBLE_CLICK))
+		if (nk_input_mouse_clicked(&ctx->input, NK_BUTTON_DOUBLE, bounds))
 		{
 			logI("File: %s was double clicked\n", tree->name);
 			addJob(jobbedOpenFile, (void*)tree->path);

@@ -3,8 +3,8 @@
 #include <string>
 #include "gl3w.h"
 
-#define NK_IMPLEMENTATION
-#define NK_GLFW_GL3_IMPLEMENTATION
+//#define NK_IMPLEMENTATION
+//#define NK_GLFW_GL3_IMPLEMENTATION
 #include "NuklearAndConfig.h"
 #include "nuklear/nuklear_glfw_gl3.h"
 
@@ -119,7 +119,7 @@ int main() {
 //	glewExperimental = 1;
 //	glewInit();
 
-	g->ctx = nk_glfw3_init(g->win, NK_GLFW3_INSTALL_CALLBACKS, keyHandler);
+	g->ctx = nk_glfw3_init(g->win, NK_GLFW3_INSTALL_CALLBACKS);// , keyHandler);
 	nk_font_atlas* atlas;
 	nk_font* font;
 	/*
