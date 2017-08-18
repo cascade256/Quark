@@ -1,7 +1,7 @@
 #include "LayoutManager.h"
 #include "TextEditor.h"
 #include "FileTree.h"
-struct View;
+struct ViewLayout;
 
 enum ViewType {
 	VIEW_SINGLE,
@@ -19,11 +19,11 @@ struct ViewSingle {
 };
 
 struct ViewSplit {
-	View* view1;
-	View* view2;
+	ViewLayout* view1;
+	ViewLayout* view2;
 };
 
-struct View {
+struct ViewLayout {
 	ViewType type;
 	union {
 		ViewSingle single;
@@ -34,19 +34,30 @@ struct View {
 		float percentageSplit;
 	};
 };
- 
 
-static View root;
+//A fully layed out view, ready to be drawn
+struct View {
+	struct nk_rect bounds;
+	LayoutFunc draw;
+	char* title;
+};
 
-View* createView(LayoutFunc draw, char* title) {
-	View* view = new View();
+static ViewLayout root;
+static Array<View> layedoutViews;
+
+void initLayout() {
+	arrayInit(&layedoutViews);
+}
+
+ViewLayout* createView(LayoutFunc draw, char* title) {
+	ViewLayout* view = new ViewLayout();
 	view->single.draw = draw;
 	view->single.title = title;
 	return view;
 }
 
-View* createSplitViewPercentage(View* view1, View* view2, bool isVertical, float percentage) {
-	View* view = new View();
+ViewLayout* createSplitViewPercentage(ViewLayout* view1, ViewLayout* view2, bool isVertical, float percentage) {
+	ViewLayout* view = new ViewLayout();
 	if (isVertical) {
 		view->type = VIEW_SPLIT_VERTICAL_PERCENTAGE;
 	}
@@ -59,8 +70,8 @@ View* createSplitViewPercentage(View* view1, View* view2, bool isVertical, float
 	return view;
 }
 
-View* createSplitViewPixel(View* view1, View* view2, bool isVertical, bool isFirstViewLimited, int pixels) {
-	View* view = new View();
+ViewLayout* createSplitViewPixel(ViewLayout* view1, ViewLayout* view2, bool isVertical, bool isFirstViewLimited, int pixels) {
+	ViewLayout* view = new ViewLayout();
 	if (isVertical) {
 		if (isFirstViewLimited) {
 			view->type = VIEW_SPLIT_VERTICAL_PIXEL_TOP;
@@ -83,11 +94,13 @@ View* createSplitViewPixel(View* view1, View* view2, bool isVertical, bool isFir
 	return view;
 }
 
-void drawLayoutRecursively(View* view, struct nk_rect totalArea) {
+void layoutViewsRecursively(ViewLayout* view, struct nk_rect totalArea) {
 	if (view->type == VIEW_SINGLE) {
-		nk_begin(g->ctx, view->single.title, totalArea, NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR);
-		view->single.draw();
-		nk_end(g->ctx);
+		View layedoutView;
+		layedoutView.bounds = totalArea;
+		layedoutView.draw = view->single.draw;
+		layedoutView.title = view->single.title;
+		arrayAdd(&layedoutViews, layedoutView);
 	}
 	else {
 		struct nk_rect area1;
@@ -190,11 +203,23 @@ void drawLayoutRecursively(View* view, struct nk_rect totalArea) {
 			assert(false);
 		}
 
-		drawLayoutRecursively(view->split.view1, area1);
-		drawLayoutRecursively(view->split.view2, area2);
+		layoutViewsRecursively(view->split.view1, area1);
+		layoutViewsRecursively(view->split.view2, area2);
 	}
 }
 
-void drawLayout(View* view, int width, int height) {
-	drawLayoutRecursively(view, nk_rect(0, 0, width, height));
+void layoutViews(ViewLayout* view, int width, int height) {
+	layedoutViews.len = 0;//Clear the array
+	layoutViewsRecursively(view, nk_rect(0, 0, width, height));
+}
+
+void drawLayout(int width, int height) {
+	nk_layout_space_begin(g->ctx, NK_STATIC, nk_window_get_content_region(g->ctx).h, INT_MAX);
+	for (int i = 0; i < layedoutViews.len; i++) {
+		nk_layout_space_push(g->ctx, layedoutViews[i].bounds);
+		nk_group_begin(g->ctx, layedoutViews[i].title, NULL);
+		layedoutViews[i].draw();
+		nk_group_end(g->ctx);
+	}
+	nk_layout_space_end(g->ctx);
 }
