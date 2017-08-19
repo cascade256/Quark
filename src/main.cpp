@@ -196,7 +196,7 @@ int main() {
 	g->ctx->style.edit.selected_normal.a = 200;
 	g->ctx->style.edit.selected_normal.b = 200;
 	//initLayout();
-	View* view = createSplitViewPixel(createView(drawMainMenu, "Main Menu"), createSplitViewPixel(createView(drawFileTree, "File Tree"), createView(drawTextEditor, "Text Editor"), false, true, 300), true, true, 30);
+	View* view = createSplitViewPixel(createView(drawFileTree, "File Tree"), createView(drawTextEditor, "Text Editor"), false, true, 300);
 
 	arrayTest();
 
@@ -209,71 +209,10 @@ int main() {
 		int height;
 		glfwGetWindowSize(g->win, &width, &height);
 
-		//nk_begin(g->ctx, "TEST", nk_rect(0, 0, width, height), NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR);
+		nk_begin(g->ctx, "TEST", nk_rect(0, 0, width, height), NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR);
+		drawMainMenu();
 		drawLayout(view, width, height);
-		//nk_end(g->ctx);
-#ifdef ALSJKDFH
-		if (nk_begin(g->ctx, "Demo", nk_rect(0, 0, width, height),
-			NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR)) {
-
-			int windowHeaderHeight = 30;
-			//Menu bar
-			/*
-			int menuBarHeight = 25;
-			nk_menubar_begin(g->ctx);
-			nk_layout_row_begin(g->ctx, NK_STATIC, menuBarHeight, 4);
-			nk_layout_row_push(g->ctx, 45);
-			if (nk_menu_begin_label(g->ctx, "File", NK_TEXT_LEFT, nk_vec2(120, 200))) {
-				nk_layout_row_dynamic(g->ctx, 25, 1);
-				if (nk_menu_item_label(g->ctx, "Quit", NK_TEXT_LEFT)) {
-					glfwSetWindowShouldClose(g->win, true);
-				}
-				nk_menu_end(g->ctx);
-			}
-			nk_menubar_end(g->ctx);
-			*/
-			drawMainMenu();
-
-			struct nk_rect region = nk_window_get_content_region(g->ctx);
-			float ratio = 0.2f;
-			nk_label(g->ctx, "Default", NK_TEXT_LEFT);
-
-			static float fileTreeWidth = 400;
-			static float textEditorWidth = region.w - 380;
-
-			textEditorWidth = region.w - fileTreeWidth - 50;
-			float row_layout[3];
-			row_layout[0] = fileTreeWidth;
-			row_layout[1] = 8;
-			row_layout[2] = textEditorWidth;
-			nk_layout_row(g->ctx, NK_STATIC, region.h - 10, 3, row_layout);
-
-			//File explorer
-			if (nk_group_begin(g->ctx, "Files", NK_WINDOW_BORDER))
-			{
-				drawFileTree(g->ctx, &fileTree, &g->files);
-				nk_group_end(g->ctx);
-			}
-
-			struct nk_rect bounds = nk_widget_bounds(g->ctx);
-			nk_spacing(g->ctx, 1);
-			if ((nk_input_is_mouse_hovering_rect(&g->ctx->input, bounds) ||
-				nk_input_is_mouse_prev_hovering_rect(&g->ctx->input, bounds)) &&
-				nk_input_is_mouse_down(&g->ctx->input, NK_BUTTON_LEFT))
-			{
-				fileTreeWidth = row_layout[0] + g->ctx->input.mouse.delta.x;
-				if (fileTreeWidth <= 100) {
-					fileTreeWidth = 100;
-				}
-			}
-
-
-			drawTextEditor(g->ctx, &g->files);
-			
-		}
 		nk_end(g->ctx);
-#endif
-
 
 		//overview(g->ctx);
 		glViewport(0, 0, width, height);

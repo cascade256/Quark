@@ -220,6 +220,11 @@ nk_glfw3_device_destroy(void)
 NK_API void
 nk_glfw3_render(enum nk_anti_aliasing AA, int max_vertex_buffer, int max_element_buffer)
 {
+	if (glfw.ctx.style.cursor_type != glfw.activeCursor) {
+		glfw.activeCursor = glfw.ctx.style.cursor_type;
+		glfwSetCursor(glfw.win, glfw.cursors[glfw.activeCursor]);
+	}
+
     struct nk_glfw_device *dev = &glfw.ogl;
     GLfloat ortho[4][4] = {
         {2.0f, 0.0f, 0.0f, 0.0f},
@@ -498,10 +503,7 @@ nk_glfw3_new_frame(void)
     for (i = 0; i < glfw.text_len; ++i)
         nk_input_unicode(ctx, glfw.text[i]);
 	
-	if (glfw.ctx.style.cursor_type != glfw.activeCursor) {
-		glfw.activeCursor = glfw.ctx.style.cursor_type;
-		glfwSetCursor(glfw.win, glfw.cursors[glfw.activeCursor]);
-	}
+
 #if NK_GLFW_GL3_MOUSE_GRABBING
     /* optional grabbing behavior */
     if (ctx->input.mouse.grab)
