@@ -1,10 +1,12 @@
 #pragma once
 #include "OpenFileManager.h"
 #include "NuklearAndConfig.h"
-#include "nuklear/nuklear_glfw_gl3.h"
+//#include "nuklear/nuklear_glfw_gl3.h"
 #include "hashmap.h"
 #include "tinycthread.h"
 #include "MainMenu.h"
+
+struct GLFWwindow;
 
 struct Global {
 	GLFWwindow* win;

@@ -25,7 +25,7 @@ struct AutoCompleteData {
 	int col;
 };
 
-enum TokenType {
+enum Token_Type {//The underscore is needed due to a name conflict with a Windows type
 	TOK_DEFAULT,
 	TOK_COMMENT,
 	TOK_IDENTIFIER,
@@ -96,5 +96,4 @@ struct Plugin {
 	type_getPluginInfo getPluginInfo;
 	type_initPlugin initPlugin;
 	type_destroyPlugin destroyPlugin;
-
 };
