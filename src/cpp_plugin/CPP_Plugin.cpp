@@ -5,6 +5,7 @@
 #include "build.h"
 //#include "debug.h"
 #include "../parson.h"
+#include "../ParsingUtils.h"
 #include "CPP_Plugin.h"
 #include <stdlib.h>
 
@@ -19,77 +20,22 @@ extern "C" {
 	Plugin_API api;
 	Project project;
 
-	int parseString(char* text, int start, int buffLen) {
-		int i = start;
-		while (i < buffLen && (text[i] != '"')) {
-			i++;
-		}
-		return i + 1;
-	}
-
-	bool isLetter(char c) {
-		return ((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'));
-	}
-
-	bool isNumber(char c) {
-		return (c >= '0') && (c <= '9');
-	}
-
-	int parseIdentifier(char* text, int start, int buffLen) {
-		int i = start;
-		while (i < buffLen && (isLetter(text[i]) || isNumber(text[i]) || (text[i] == '_'))) {
-			i++;
-		}
-		return i;
-	}
-
-
-	int parseNumber(char* text, int start, int buffLen) {
-		int i = start;
-		while (i < buffLen) {
-			if (isNumber(text[i])) {
-				i++;
-			}
-			else {
-				return i;
-			}
-		}
-		return i;
-	}
-
-	bool isWhitespace(char c) {
-		return (c == ' ') || (c == '\t');
-	}
-
-	int parseWhitespace(char* text, int start, int buffLen) {
-		int i = start;
-		while (i < buffLen) {
-			if (isWhitespace(text[i])) {
-				i++;
-			}
-			else {
-				return i;
-			}
-		}
-		return i;
-	}
-
 	void colorize(Array<TextLine>* lines, int editedLine) {
 		TextLine* line = &lines->data[editedLine];
 		int i = 0;
 		while (i < line->text.len) {
-			TokenType tok = TOK_DEFAULT;
+			Token_Type tok = TOK_DEFAULT;
 			int tokStart = i;
 			char c = line->text.data[i];
 			if (isWhitespace(c)) {
-				i = parseWhitespace(line->text.data, i, line->text.len);
+				i = parseWhitespace(&line->text, i);
 			}
 			else if (isNumber(c)) {
-				i = parseNumber(line->text.data, i, line->text.len);
+				i = parseNumber(&line->text, i);
 				tok = TOK_NUMBER;
 			}
 			else if (isLetter(c)) {
-				i = parseIdentifier(line->text.data, i, line->text.len);
+				i = parseIdentifier(&line->text, i);
 
 				/*
 								for(int j = tokStart; j < i; j++) {
@@ -136,7 +82,7 @@ extern "C" {
 
 			}
 			else if (c == '"') {
-				i = parseString(line->text.data, i + 1, line->text.len);
+				i = parseString(&line->text, i + 1);
 				tok = TOK_STRING;
 			}
 			else if (c == '/' && line->text.data[i + 1] == '/') {
