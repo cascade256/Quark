@@ -84,7 +84,12 @@ void drawTextEditor(nk_context* ctx, OpenFiles* files) {
 				nk_layout_row_push(ctx, region.w - row_height);
 				//printf("Active file index: %i\n", activeFileIndex);
 
-				nk_my_text_editor(ctx, NK_EDIT_CLIPBOARD | NK_EDIT_SIMPLE | NK_EDIT_MULTILINE | NK_EDIT_ALLOW_TAB, &f->edit, nk_filter_default);
+				nk_flags flags = nk_my_text_editor(ctx, NK_EDIT_CLIPBOARD | NK_EDIT_SIMPLE | NK_EDIT_MULTILINE | NK_EDIT_ALLOW_TAB, &f->edit, nk_filter_default);
+
+				//Check to see if the file has not been flagged as unsaved yet, but was just changed
+				if (!f->unsaved && flags & NK_EDIT_CHANGED) {
+					f->unsaved = true;
+				}
 
 				//Draw the find dialog
 				if (findDialogOpen) {

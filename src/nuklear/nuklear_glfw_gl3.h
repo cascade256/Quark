@@ -20,7 +20,10 @@ enum nk_glfw_init_state{
     NK_GLFW3_INSTALL_CALLBACKS
 };
 
-NK_API struct nk_context*   nk_glfw3_init(GLFWwindow *win, enum nk_glfw_init_state);
+
+typedef void(*ControlKeyCallback)(int key, int action);
+
+NK_API struct nk_context*   nk_glfw3_init(GLFWwindow *win, enum nk_glfw_init_state, ControlKeyCallback);
 NK_API void                 nk_glfw3_shutdown(void);
 NK_API void                 nk_glfw3_font_stash_begin(struct nk_font_atlas **atlas);
 NK_API void                 nk_glfw3_font_stash_end(void);
@@ -75,6 +78,7 @@ struct nk_glfw_vertex {
     nk_byte col[4];
 };
 
+
 static struct nk_glfw {
     GLFWwindow *win;
     int width, height;
@@ -91,6 +95,7 @@ static struct nk_glfw {
 	nk_style_cursor activeCursor;		
 	bool doubleClickDown;
 	struct nk_vec2 doubleClickPos;
+	ControlKeyCallback controlKeyCB;
 } glfw;
 
 #ifdef __APPLE__
@@ -322,6 +327,13 @@ nk_glfw3_render(enum nk_anti_aliasing AA, int max_vertex_buffer, int max_element
 }
 
 NK_API void
+nk_glfw3_key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) {
+	if (mods & GLFW_MOD_CONTROL) {
+		glfw.controlKeyCB(key, action);
+	}
+}
+
+NK_API void
 nk_glfw3_char_callback(GLFWwindow *win, unsigned int codepoint)
 {
     (void)win;
@@ -443,13 +455,14 @@ nk_glfw3_clipbard_copy(nk_handle usr, const char *text, int len)
 }
 
 NK_API struct nk_context*
-nk_glfw3_init(GLFWwindow *win, enum nk_glfw_init_state init_state)
+nk_glfw3_init(GLFWwindow *win, enum nk_glfw_init_state init_state, ControlKeyCallback controlKeyCB)
 {
     glfw.win = win;
     if (init_state == NK_GLFW3_INSTALL_CALLBACKS) {
         glfwSetScrollCallback(win, nk_gflw3_scroll_callback);
         glfwSetCharCallback(win, nk_glfw3_char_callback);
         glfwSetMouseButtonCallback(win, nk_glfw3_mouse_button_callback);
+		glfwSetKeyCallback(win, nk_glfw3_key_callback);
     }
     nk_init_default(&glfw.ctx, 0);
     glfw.ctx.clip.copy = nk_glfw3_clipbard_copy;
@@ -459,6 +472,8 @@ nk_glfw3_init(GLFWwindow *win, enum nk_glfw_init_state init_state)
 	glfw.ctx.my_clip.copy = nk_glfw3_my_clipbard_copy;
 	glfw.ctx.my_clip.paste = nk_glfw3_my_clipbard_paste;
 	glfw.ctx.my_clip.userdata = nk_handle_ptr(0);		
+
+	glfw.controlKeyCB = controlKeyCB;
 
 	glfw.doubleClickDown = false;
 	glfw.doubleClickPos = nk_vec2(0, 0);

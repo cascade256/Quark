@@ -2011,7 +2011,8 @@ enum nk_edit_flags {
     NK_EDIT_NO_HORIZONTAL_SCROLL    = NK_FLAG(8),
     NK_EDIT_ALWAYS_INSERT_MODE      = NK_FLAG(9),
     NK_EDIT_MULTILINE               = NK_FLAG(10),
-    NK_EDIT_GOTO_END_ON_ACTIVATE    = NK_FLAG(11)
+    NK_EDIT_GOTO_END_ON_ACTIVATE    = NK_FLAG(11),
+	NK_EDIT_CHANGED					= NK_FLAG(12)
 };
 enum nk_edit_types {
     NK_EDIT_SIMPLE  = NK_EDIT_ALWAYS_INSERT_MODE,
@@ -22213,7 +22214,7 @@ nk_group_scrolled_end(struct nk_context *ctx)
     win = ctx->current;
     NK_ASSERT(win->layout);
     g = win->layout;
-    NK_ASSERT(g->parent);
+     NK_ASSERT(g->parent);
     parent = g->parent;
 
     /* dummy window */

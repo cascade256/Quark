@@ -33,7 +33,7 @@
 Global* g;
 FileTreeItem fileTree;
 
-void keyHandler(GLFWwindow* win, int key, int scancode, int action, int mods);
+void controlKeyHandler(int key, int action);
 
 void sleepJob(void*) {
 	logD("Start sleeping\n");
@@ -119,7 +119,7 @@ int main() {
 //	glewExperimental = 1;
 //	glewInit();
 
-	g->ctx = nk_glfw3_init(g->win, NK_GLFW3_INSTALL_CALLBACKS);// , keyHandler);
+	g->ctx = nk_glfw3_init(g->win, NK_GLFW3_INSTALL_CALLBACKS, controlKeyHandler);
 	nk_font_atlas* atlas;
 	nk_font* font;
 	/*
@@ -150,7 +150,7 @@ int main() {
 	logI("Font File: %s\n", fontFile);
 
 	nk_glfw3_font_stash_begin(&atlas);
-	font = nk_font_atlas_add_from_file(atlas, fontFile, 16, NULL);
+	font = nk_font_atlas_add_from_file(atlas, fontFile, 14, NULL);
 	nk_glfw3_font_stash_end();
 	nk_style_set_font(g->ctx, &font->handle);
 
@@ -234,15 +234,13 @@ int main() {
 }
 
 
-void keyHandler(GLFWwindow* win, int key, int scancode, int action, int mods) {
-	if ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL) {
-		switch (key) {
-		case GLFW_KEY_S:
-			saveActiveFile(&g->files);
-			break;
-		case GLFW_KEY_F:
-			showSearchDialog();
-			break;
-		}
-	}
+void controlKeyHandler(int key, int action) {
+	switch (key) {
+	case GLFW_KEY_S:
+		saveActiveFile(&g->files);
+		break;
+	case GLFW_KEY_F:
+		showSearchDialog();
+		break;
+	}	
 }

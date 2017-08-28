@@ -1154,18 +1154,20 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 		}
 
 
-		{int i; /* keyboard input */
-		int old_mode = edit->mode;
-		for (i = 0; i < NK_KEY_MAX; ++i) {
-			if (i == NK_KEY_ENTER || i == NK_KEY_TAB) continue; /* special case */
-			if (nk_input_is_key_pressed(in, (enum nk_keys)i)) {
-				nk_my_textedit_key(edit, (enum nk_keys)i, shift_mod, font, row_height);
-				cursor_follow = nk_true;
+		{
+			int i; /* keyboard input */
+			int old_mode = edit->mode;
+			for (i = 0; i < NK_KEY_MAX; ++i) {
+				if (i == NK_KEY_ENTER || i == NK_KEY_TAB) continue; /* special case */
+				if (nk_input_is_key_pressed(in, (enum nk_keys)i)) {
+					nk_my_textedit_key(edit, (enum nk_keys)i, shift_mod, font, row_height);
+					cursor_follow = nk_true;
+				}
+			}
+			if (old_mode != edit->mode) {
+				in->keyboard.text_len = 0;
 			}
 		}
-		if (old_mode != edit->mode) {
-			in->keyboard.text_len = 0;
-		}}
 
 		/* text input */
 		edit->filter = filter;
@@ -1173,6 +1175,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 			nk_my_textedit_text(edit, in->keyboard.text, in->keyboard.text_len);
 			cursor_follow = nk_true;
 			in->keyboard.text_len = 0;
+			ret |= NK_EDIT_CHANGED;
 		}
 
 		/* enter key handler */
@@ -1182,7 +1185,10 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 				nk_my_textedit_text(edit, "\n", 1);
 			else if (flags & NK_EDIT_SIG_ENTER)
 				ret |= NK_EDIT_COMMITED;
-			else nk_my_textedit_text(edit, "\n", 1);
+			else {
+				nk_my_textedit_text(edit, "\n", 1);
+				ret |= NK_EDIT_CHANGED;
+			}
 		}
 
 		/* cut & copy handler */
@@ -1202,6 +1208,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 				if (cut && !(flags & NK_EDIT_READ_ONLY)) {
 					nk_my_textedit_cut(edit);
 					cursor_follow = nk_true;
+					ret |= NK_EDIT_CHANGED;
 				}
 			}
 		}
@@ -1213,6 +1220,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 			if (paste && (flags & NK_EDIT_CLIPBOARD) && edit->clip.paste) {
 				edit->clip.paste(edit->clip.userdata, edit);
 				cursor_follow = nk_true;
+				ret |= NK_EDIT_CHANGED;
 			}
 		}
 
@@ -1226,6 +1234,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 				nk_my_textedit_insert_glyph(&edit->lines[edit->cursor.line], &edit->cursor, "\t", 1);
 #endif
 				cursor_follow = nk_true;
+				ret |= NK_EDIT_CHANGED;
 			}
 		}
 	}
@@ -1252,7 +1261,8 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 			nk_stroke_rect(out, bounds, style->rounding, style->border, style->border_color);
 			nk_fill_rect(out, bounds, style->rounding, background->data.color);
 		}
-		else nk_draw_image(out, bounds, &background->data.image, nk_white); }
+		else nk_draw_image(out, bounds, &background->data.image, nk_white); 
+	}
 
 	area.w = NK_MAX(0, area.w - style->cursor_size);
 	if (edit->active)
