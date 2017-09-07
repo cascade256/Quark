@@ -105,13 +105,15 @@ void drawTextEditor(nk_context* ctx, OpenFiles* files) {
 			nk_group_end(ctx);
 
 		}
-		if (files->openFiles[g->activeFileIndex].edit.acActive) {
+        /*
+        if (files->openFiles[g->activeFileIndex].edit.acActive) {
 			struct nk_vec2 cursorPos = nk_my_get_cursor_pos(&files->openFiles[g->activeFileIndex].edit, g->ctx->style.font, g->ctx->style.font->height + g->ctx->style.edit.row_padding);
 			drawAutocompleteDialog(nk_vec2(cursorPos.x + region.x + 5, cursorPos.y + region.y + 20),
 				files->openFiles[g->activeFileIndex].edit.acData,
 				&(files->openFiles[g->activeFileIndex].edit.acActive));
 
 		}
+        */
 	}
 }
 

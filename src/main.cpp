@@ -45,7 +45,7 @@ void sleepJob(void*) {
 
 void jobsTest() {
 	addJob(sleepJob, NULL);
-	addJob(jobbedOpenFile, "..\\meson.build");
+	addJob(jobbedOpenFile, (void*)"..\\meson.build");
 }
 
 void printActiveFile() {
@@ -139,15 +139,17 @@ int main() {
 	char* fileName = strrchr(fontFile, '\\');
 	strncpy(fileName, "\\Code New Roman.ttf", 1024 - (fileName - fontFile));
 #elif __linux__
-	int len = readlink("/proc/self/exe", fontFile, 1024);
-	fontFile[len] = '\0';
-	char* fileName = strrchr(fontFile, '/');
-	strncpy(fileName, "/plugins/", 1024 - (fileName - fontFile));
+	{
+	    int len = readlink("/proc/self/exe", fontFile, 1024);
+	    fontFile[len] = '\0';
+       	char* fileName = strrchr(fontFile, '/');
+	    strncpy(fileName, "/DroidSansMono.ttf", 1024 - (fileName - fontFile));
+	}
 #else
 #error "Unsupported platform!"
 #endif
-
 	logI("Font File: %s\n", fontFile);
+    printf("Font File: %s\n", fontFile);
 
 	nk_glfw3_font_stash_begin(&atlas);
 	font = nk_font_atlas_add_from_file(atlas, fontFile, 14, NULL);
@@ -167,12 +169,13 @@ int main() {
 #ifdef _WIN32
 	GetCurrentDirectory(1024, path);
 #else
-		getcwd(path, 1024);
+	getcwd(path, 1024);
 #endif
 	//printf("Path: %s\n", path);
 	logD("Path: %s\n", path);
 	strcat(path, "/..");
-	createFileTree("X:\\Github\\CADlib", &fileTree);
+	//createFileTree("X:\\Github\\CADlib", &fileTree);
+    createFileTree(path, &fileTree);
 	delete[] path;
 
 	g->theme = new nk_color[12];

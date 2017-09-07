@@ -4,6 +4,12 @@
 #define __stdcall
 #endif
 
+#ifdef _WIN32
+    #define EXPORT __declspec(dllexport)
+#elif __linux__
+    #define EXPORT 
+#endif
+
 enum LogLevel {
 	LOG_DEBUG,
 	LOG_INFO,

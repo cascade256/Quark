@@ -17,7 +17,7 @@ enum ViewType {
 };
 
 struct ViewSingle {
-	char* title;
+    const char* title;
 	LayoutFunc draw;
 };
 
@@ -41,7 +41,7 @@ struct View {
 
 static View root;
 
-View* createView(LayoutFunc draw, char* title) {
+View* createView(LayoutFunc draw, const char* title) {
 	View* view = new View();
 	view->single.draw = draw;
 	view->single.title = title;

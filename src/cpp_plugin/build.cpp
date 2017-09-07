@@ -84,6 +84,19 @@ bool fileExists(const char* path) {
 	struct _stat buffer;
 	return (_stat(path, &buffer) == 0);
 }
+#elif __linux__
+void compileTarget(TargetCompileData data) {
+
+}
+
+time_t getFileTime(const char* path) {
+
+}
+
+bool fileExists(const char* path) {
+
+}
+
 #endif
 
 void printTime(const tm* t) {

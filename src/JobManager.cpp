@@ -57,7 +57,7 @@ int launchFunc(void* i) {
 }
 
 void testFunc(void* arg) {
-	logD("Test: %i\n", (int)arg);
+	logD("Test: %i\n", arg);
 }
 
 void initJobManager() {

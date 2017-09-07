@@ -183,7 +183,7 @@ extern "C" {
 			}
 		}
 
-		printf("Number of Targets: %i\n", json_array_get_count(targets));
+		printf("Number of Targets: %i\n", (int)json_array_get_count(targets));
 	}
 
 	void build() {
@@ -199,11 +199,11 @@ extern "C" {
 		}
 	}
 
-	__declspec(dllexport) void getPluginInfo(PluginInfo* info) {
+	EXPORT void getPluginInfo(PluginInfo* info) {
 		strcpy(info->name, "Hallo");
 	}
 
-	__declspec(dllexport) void initPlugin(Plugin_API pluginAPI) {
+	EXPORT void initPlugin(Plugin_API pluginAPI) {
 		api = pluginAPI;
 		api.registerColorizer(colorize, "cpp");
 		api.registerColorizer(colorize, "c");
@@ -217,7 +217,7 @@ extern "C" {
 		parseProjectFile();
 	}
 
-	__declspec(dllexport) void destroyPlugin(Plugin_API api) {
+    EXPORT void destroyPlugin(Plugin_API api) {
 
 	}
 

@@ -42,7 +42,7 @@ bool loadPlugin(const char* path, Plugin* plugin) {
 #else
 	void* dll = dlopen(path, RTLD_NOW);
 	if (!dll) {
-		logW("Failed to load the plugin\n");
+		logW("Failed to load the plugin: %s\n", dlerror());
 		return false;
 	}
 

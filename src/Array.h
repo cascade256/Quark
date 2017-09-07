@@ -1,5 +1,5 @@
 #pragma once
-
+#include <cstring>
 template <class T>
 struct Array {
 	T* data;
@@ -87,7 +87,7 @@ void arrayInsert(Array<T>* arr, int i, Array<T>* items) {
 		memcpy(arr->data, oldData, sizeof(T) * arr->len);
 	}
 	//Move the data to make room for the inserted data
-	memcpy(&arr->data[i + items->len], &oldData[i], sizeof(T) * (arr->len - i));
+	memcpy(&arr->data[i + items->len], &arr->data[i], sizeof(T) * (arr->len - i));
 	
 	//Insert the new data
 	memcpy(&arr->data[i], items->data, sizeof(T) * items->len);

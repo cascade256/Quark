@@ -1,4 +1,4 @@
-char* keywords[] = {
+const char* keywords[] = {
     "alignas",
     "alignof",
     "and",

@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include "Logger.h"
 
+#ifdef __linux__ 
+#include <unistd.h>
+#endif
+
 typedef void(*JobFunc)(void*);
 
 struct Job {

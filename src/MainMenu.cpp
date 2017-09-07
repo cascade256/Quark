@@ -11,7 +11,7 @@ void drawSubMenu(SubMenu subMenu) {
 		for (int i = 0; i < subMenu.numItems; i++) {
 			if (nk_menu_item_label(g->ctx, subMenu.items[i].name, NK_TEXT_LEFT)) {
 				if (subMenu.items[i].onClick) {
-					addJob(jobbedEvent, subMenu.items[i].onClick);
+					addJob(jobbedEvent, (void*)subMenu.items[i].onClick);
 				}
 			}
 		}

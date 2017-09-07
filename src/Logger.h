@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <cassert>
 #include "PluginProtocol.h"
+#include <cstring>
+#include <cstdarg>
 
 void initLog(LogLevel level);
 void flushLog();

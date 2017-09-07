@@ -1,14 +1,16 @@
-#pragma once
-
 #define _CRT_SECURE_NO_WARNINGS
 
-#include "../Globals.h"
+#include "../GlobalsStruct.h"
 #include "../ParsingUtils.h"
 #include "keywords.h"
 #include <cstring>
 #include <stdlib.h>
 #include "../PluginProtocol.h"
 
+#undef logD
+#undef logI
+#undef logW
+#undef logE
 #define logD(message, ...) api.logFunc(__FILE__, __LINE__, LOG_DEBUG, message, ##__VA_ARGS__)
 #define logI(message, ...) api.logFunc(__FILE__, __LINE__, LOG_INFO, message, ##__VA_ARGS__)
 #define logW(message, ...) api.logFunc(__FILE__, __LINE__, LOG_WARNING, message, ##__VA_ARGS__)
@@ -98,11 +100,11 @@ extern "C" {
 		}
 	}
 
-	__declspec(dllexport) void getPluginInfo(PluginInfo* info) {
+    EXPORT void getPluginInfo(PluginInfo* info) {
 		strcpy(info->name, "Python");
 	}
 
-	__declspec(dllexport) void initPlugin(Plugin_API pluginAPI) {
+	EXPORT void initPlugin(Plugin_API pluginAPI) {
 		api = pluginAPI;
 		api.registerColorizer(colorize, "py");
 
@@ -111,8 +113,7 @@ extern "C" {
 
 		g = api.getGlobalData();
 	}
-
-	__declspec(dllexport) void destroyPlugin(Plugin_API api) {
+    EXPORT void destroyPlugin(Plugin_API api) {
 
 	}
 }
