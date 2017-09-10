@@ -1,8 +1,5 @@
 #pragma once
 #include "Array.h"
-#ifndef _WIN32
-#define __stdcall
-#endif
 
 #ifdef _WIN32
     #define EXPORT __declspec(dllexport)
@@ -94,9 +91,9 @@ struct Plugin_API {
 	LogFormatStringFunc logFunc;
 };
 
-typedef void(__stdcall *type_initPlugin)(Plugin_API);
-typedef void(__stdcall *type_destroyPlugin)(Plugin_API);
-typedef void(__stdcall *type_getPluginInfo)(PluginInfo*);
+typedef void(*type_initPlugin)(Plugin_API);
+typedef void(*type_destroyPlugin)(Plugin_API);
+typedef void(*type_getPluginInfo)(PluginInfo*);
 
 struct Plugin {
 	type_getPluginInfo getPluginInfo;

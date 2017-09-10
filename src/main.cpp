@@ -137,13 +137,13 @@ int main() {
 #ifdef _WIN32
 	GetModuleFileName(NULL, fontFile, 1024);
 	char* fileName = strrchr(fontFile, '\\');
-	strncpy(fileName, "\\Code New Roman.ttf", 1024 - (fileName - fontFile));
+	strncpy(fileName, "\\fonts\\CodeNewRoman.ttf", 1024 - (fileName - fontFile));
 #elif __linux__
 	{
 	    int len = readlink("/proc/self/exe", fontFile, 1024);
 	    fontFile[len] = '\0';
        	char* fileName = strrchr(fontFile, '/');
-	    strncpy(fileName, "/DroidSansMono.ttf", 1024 - (fileName - fontFile));
+	    strncpy(fileName, "/fonts/CodeNewRoman.ttf", 1024 - (fileName - fontFile));
 	}
 #else
 #error "Unsupported platform!"
