@@ -46,5 +46,9 @@ add_library(Python_Plugin SHARED src/python_plugin/PythonPlugin.cpp src/ParsingU
 add_custom_command(TARGET Python_Plugin POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:Python_Plugin> $<TARGET_FILE_DIR:Quark>/plugins)
 add_custom_command(TARGET Python_Plugin POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:Python_Plugin>)
 
+#Build tests
+project (Tests C CXX) 
+add_executable(Test src/tests/main.cpp)
+
 #This is just so the solution is named correctly
 project (Quark)

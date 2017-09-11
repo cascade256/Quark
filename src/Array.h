@@ -1,5 +1,7 @@
 #pragma once
 #include <cstring>
+#include <cassert>
+
 template <class T>
 struct Array {
 	T* data;
@@ -10,12 +12,6 @@ struct Array {
 	}
 };
 
-/*template <class T>
-void arrayInit(Array<T>* arr);
-
-template <class T>
-void arrayAdd(Array<T>* arr, T item);
-*/
 template <class T>
 void arrayInit(Array<T>* arr) {
 	arr->len = 0;
@@ -134,8 +130,19 @@ Array<T> arrayCopy(const Array<T>* arr) {
 
 template <class T>
 void arrayRemoveAt(Array<T>* arr, int i) {
+	assert(i >= 0 && i < arr->len);
 	memcpy(&arr->data[i], &arr->data[i + 1], sizeof(T) * (arr->len - i));
 	arr->len--;
+}
+
+//Removes the start item and up to, but not including, the end item
+template <class T>
+void arrayRemoveRange(Array<T>* arr, int start, int end) {
+	assert(start >= 0 && start < arr->len);
+	assert(end >= 0 && end <= arr->len);
+	assert(start <= end);
+	memcpy(&arr->data[start], &arr->data[end], sizeof(T) * (arr->len - end));
+	arr->len -= (end - start);
 }
 
 

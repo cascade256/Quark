@@ -1,8 +1,7 @@
 #include "OpenFileManager.h"
-
-
 #include "Globals.h"
 
+#define NEWLINE '\n'
 
 void appendLine(Array<TextLine>* lines, const TextLine* line) {
 	TextLine copy;
@@ -20,8 +19,8 @@ void openFile(const char* path) {
 	FILE* file;
 	file = fopen(path, "r");
 	if(!file) {
-			logW("Failed to open the file: %s\n", path);
-			return;
+		logW("Failed to open the file: %s\n", path);
+		return;
 	}
 
 	//Fill in the new file info
@@ -35,11 +34,21 @@ void openFile(const char* path) {
 	char c = fgetc(file);
 	while (c != EOF) {
 		if (c == '\n') {
-			arrayAdd(&temp.text, c);
-			arrayAdd(&temp.colors, (char)TOK_DEFAULT);
 			appendLine(&lines, &temp);
 			temp.text.len = 0;
 			temp.colors.len = 0;
+		}
+		else if (c == '\r') {
+			appendLine(&lines, &temp);
+			temp.text.len = 0;
+			temp.colors.len = 0;
+
+			//If it is followed by a '\n', skip over it so there is not double newlines
+			//Otherwise put the char back into the stream
+			char possibleNewline = fgetc(file);
+			if (possibleNewline != '\n') {
+				ungetc(possibleNewline, file);
+			}
 		}
 		else {
 			arrayAdd(&temp.text, c);
@@ -65,9 +74,6 @@ void openFile(const char* path) {
 	strncpy(openFile.path, path, pathLen + 1);
 	openFile.unsaved = false;
 	arrayInit(&openFile.breakpoints);
-	arrayAdd(&openFile.breakpoints, 1);
-	arrayAdd(&openFile.breakpoints, 10);
-
 
 	const char* fileName;
 #ifdef _WIN32
@@ -152,33 +158,18 @@ void openFile(const char* path) {
 
 	g->files.openFiles[g->files.len - 1] = openFile;
 	mtx_unlock(&g->filesMutex);
-	/*
-	for (int i = 0; i < openFile.buffer.len; i++) {
-		for (int j = 0; j < openFile.buffer.lines[i].len; j++) {
-			putchar(openFile.buffer.lines[i].text[j]);
-		}
-		putchar('\n');
-	}
-	*/
+
 }
 
 void saveFile(MyOpenFile* file) {
 	Array<TextLine>* lines = &file->edit.lines;
-	for (int i = 0; i < lines->len; i++) {
-		if (lines->data[i].text[lines->data[i].text.len - 1] != '\n') {
-			logW("Line %i of the buffer does not end with a new line char! Adding one.\n", i);
-			arrayAdd(&lines->data[i].text, '\n');
-			arrayAdd(&lines->data[i].colors, (char)TOK_DEFAULT);
-		}
-	}
-	//assert(false);
-	//return;
 	FILE* f;
 	f = fopen(file->path, "w");
 	if (f != NULL) {
 		Array<TextLine> lines = file->edit.lines;
 		for (int i = 0; i < lines.len; i++) {
 			fwrite(lines.data[i].text.data, sizeof(char), lines.data[i].text.len, f);
+			putc(NEWLINE, f);
 		}
 		fclose(f);
 		file->unsaved = false;

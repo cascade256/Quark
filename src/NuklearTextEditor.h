@@ -16,7 +16,7 @@ struct nk_my_text_edit {
 	nk_plugin_filter filter;
 	struct nk_vec2 scrollbar;
 
-	TextCursor cursor;//line, then column
+	TextCursor cursor;
 	TextCursor select_start;
 	TextCursor select_end;
 	unsigned char mode;
@@ -46,6 +46,11 @@ nk_my_text_editor(struct nk_context *ctx, nk_flags flags,
 NK_API struct nk_vec2
 nk_my_get_cursor_pos(struct nk_my_text_edit* edit, const struct nk_user_font* font, float row_height);
 
+NK_API void
+nk_my_textedit_text(struct nk_my_text_edit* state, const char* text, int total_len);
+
+NK_API TextCursor
+text_cursor(int line, int col);
 /*-----------------------------------------------------------------
 *
 *						My Text Editor
@@ -54,6 +59,14 @@ nk_my_get_cursor_pos(struct nk_my_text_edit* edit, const struct nk_user_font* fo
 #ifdef NK_IMPLEMENTATION
 
 #define NK_MY_TEXT_HAS_SELECTION(s)   (!((s)->select_start.line == (s)->select_end.line && (s)->select_start.col == (s)->select_end.col))
+
+NK_API TextCursor
+text_cursor(int line, int col) {
+	TextCursor t;
+	t.line = line;
+	t.col = col;
+	return t;
+}
 
 NK_INTERN nk_flags
 nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
@@ -129,7 +142,7 @@ nk_my_text_editor(struct nk_context *ctx, nk_flags flags,
 
 NK_INTERN void
 nk_my_on_text_change(nk_my_text_edit* state) {
-	if (state->acActive) {
+	if (state->acActive && state->autocomplete != NULL) {
 		state->autocomplete(state->acData, &state->lines);
 		printf("Num Completions: %i\n", state->acData->numOptions);
 	}
@@ -317,21 +330,6 @@ nk_my_textbuffer_remove_line(Array<TextLine>* buffer, int i) {
 	delete[] buffer->data[i].colors.data;
 	arrayRemoveAt(buffer, i);
 }
-/*
-NK_INTERN void
-nk_my_textline_resize(struct TextLine* line, int newSize, int newNumGlyphs) {
-	char* oldText = line->text;
-	char* oldColors = line->colors;
-	line->capacity = newSize;
-	line->text = new char[line->text.capacity];
-	line->colorCapacity = newNumGlyphs;
-	line->colors = new char[line->colors.capacity];
-	NK_MEMCPY(line->text, oldText, line->len);
-	NK_MEMCPY(line->colors, oldColors, line->colors.len);
-	delete[] oldText;
-	delete[] oldColors;
-}
-*/
 
 NK_API void
 nk_my_textedit_select_all(struct nk_my_text_edit *state)
@@ -502,28 +500,26 @@ nk_my_textedit_delete(struct nk_my_text_edit *state, TextCursor start, TextCurso
 		}
 	}
 	else {
+		TextLine* startLine = &state->lines[start.line];
 		TextLine* endLine = &state->lines[end.line];
-		memmove(endLine->text.data, &endLine->text[endByteIndex], endByteIndex);
-		memmove(endLine->colors.data, &endLine->colors[end.col], end.col);
 
-		state->lines[start.line].text.len = startByteIndex;
-		state->lines[start.line].colors.len = start.col;
+		startLine->text.len = startByteIndex;
+		startLine->colors.len = start.col;
 
+		arrayAdd(&startLine->text, &endLine->text.data[endByteIndex], endLine->text.len - endByteIndex);
+		arrayAdd(&startLine->colors, &endLine->colors.data[end.col], endLine->colors.len - end.col);
+
+		//delete any whole lines and the end line
+		if (end.line > start.line) {
+			for (int i = start.line + 1; i <= end.line; i++) {
+				delete[] state->lines[i].text.data;
+				delete[] state->lines[i].colors.data;
+			}
+			arrayRemoveRange(&state->lines, start.line + 1, end.line + 1);
+		}
 
 		if (state->colorize) {
 			state->colorize(&state->lines, start.line);
-			state->colorize(&state->lines, end.line);
-		}
-
-		//delete any whole lines
-		int numLines = end.line - start.line;
-		if (numLines > 0) {
-			for (int i = 0; i < numLines; i++) {
-				delete[] state->lines[start.line + i + 1].text.data;
-				delete[] state->lines[start.line + i + 1].colors.data;
-			}
-			NK_MEMCPY(&state->lines[start.line + 1], &state->lines[end.line], (state->lines.len - end.line) * sizeof(TextLine));
-			state->lines.len -= numLines;
 		}
 	}
 
@@ -561,6 +557,8 @@ nk_my_textedit_text(struct nk_my_text_edit* state, const char* text, int total_l
 
 	NK_ASSERT(state);
 	NK_ASSERT(text);
+	NK_ASSERT(state->cursor.line >= 0 && state->cursor.line < state->lines.len);//This triggers if the cursor is on an invalid line 
+	NK_ASSERT(state->cursor.col >= 0 && state->cursor.col <= state->lines[state->cursor.line].colors.len);//This triggers if the cursor is on an invalid column
 
 	glyph_len = nk_utf_decode(text, &unicode, total_len);
 	if (!glyph_len) return;
@@ -570,16 +568,13 @@ nk_my_textedit_text(struct nk_my_text_edit* state, const char* text, int total_l
 			break;
 		}
 
-		TextLine* line = &state->lines[state->cursor.line];
-		if (!NK_MY_TEXT_HAS_SELECTION(state)) {
-			nk_my_textedit_insert_glyph(line, &state->cursor, &text[text_len], glyph_len);
-		}
-		else {
-			nk_my_textedit_delete_selection(state); /* implicitly clamps */
-			nk_my_textedit_insert_glyph(line, &state->cursor, text + text_len, glyph_len);
-		}
-
+		//Handle the new line
 		if (unicode == '\n') {
+			if (NK_MY_TEXT_HAS_SELECTION(state)) {
+				nk_my_textedit_delete_selection(state);
+			}
+
+			TextLine* line = &state->lines[state->cursor.line];
 			TextLine newLine;
 			arrayInit(&newLine.text);
 			arrayInit(&newLine.colors);
@@ -601,6 +596,18 @@ nk_my_textedit_text(struct nk_my_text_edit* state, const char* text, int total_l
 			state->cursor.col = 0;
 			assert(line->colors.len == line->text.len);
 			assert(newLine.colors.len == newLine.text.len);
+		}
+		else 
+		{
+			if (!NK_MY_TEXT_HAS_SELECTION(state)) {
+				TextLine* line = &state->lines[state->cursor.line];
+				nk_my_textedit_insert_glyph(line, &state->cursor, &text[text_len], glyph_len);
+			}
+			else {
+				nk_my_textedit_delete_selection(state); /* implicitly clamps */
+				TextLine* line = &state->lines[state->cursor.line];
+				nk_my_textedit_insert_glyph(line, &state->cursor, text + text_len, glyph_len);
+			}
 		}
 
 		text_len += glyph_len;
