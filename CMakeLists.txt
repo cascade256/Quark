@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.1)
 
 if(UNIX)
 	file(COPY fonts/CodeNewRoman.ttf DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
