@@ -27,6 +27,7 @@ void arrayAdd(Array<T>* arr, T item) {
 		arr->capacity *= 2;
 		arr->data = new T[arr->capacity];
 		memcpy(arr->data, oldData, sizeof(T) * arr->len);
+		delete[] oldData;
 	}
 
 	arr->data[arr->len] = item;
@@ -40,6 +41,7 @@ void arrayAdd(Array<T>* arr, Array<T>* items) {
 		arr->capacity = arr->len + items->len;
 		arr->data = new T[arr->capacity];
 		memcpy(arr->data, oldData, sizeof(T) * arr->len);
+		delete[] oldData;
 	}
 	memcpy(&arr->data[arr->len], items->data, sizeof(T) * items->len);
 	arr->len += items->len;
@@ -52,6 +54,7 @@ void arrayAdd(Array<T>* arr, T* items, int len) {
 		arr->capacity = arr->len + len;
 		arr->data = new T[arr->capacity];
 		memcpy(arr->data, oldData, sizeof(T) * arr->len);
+		delete[] oldData;
 	}
 	memcpy(&arr->data[arr->len], items, sizeof(T) * len);
 	arr->len += len;
@@ -66,8 +69,9 @@ void arrayInsert(Array<T>* arr, int i, T item) {
 		arr->capacity *= 2;
 		arr->data = new T[arr->capacity];
 		memcpy(arr->data, oldData, sizeof(T) * arr->len);
+		delete[] oldData;
 	}
-	memcpy(&arr->data[i + 1], &arr->data[i], sizeof(T) * (arr->len - i));
+	memmove(&arr->data[i + 1], &arr->data[i], sizeof(T) * (arr->len - i));
 	arr->data[i] = item;
 	arr->len++;
 }
@@ -81,9 +85,10 @@ void arrayInsert(Array<T>* arr, int i, Array<T>* items) {
 		arr->capacity = arr->len + items->len;
 		arr->data = new T[arr->capacity];
 		memcpy(arr->data, oldData, sizeof(T) * arr->len);
+		delete[] oldData;
 	}
 	//Move the data to make room for the inserted data
-	memcpy(&arr->data[i + items->len], &arr->data[i], sizeof(T) * (arr->len - i));
+	memmove(&arr->data[i + items->len], &arr->data[i], sizeof(T) * (arr->len - i));
 	
 	//Insert the new data
 	memcpy(&arr->data[i], items->data, sizeof(T) * items->len);
@@ -99,9 +104,10 @@ void arrayInsert(Array<T>* arr, int i, const T* items, int numItems) {
 		arr->capacity = arr->len + numItems;
 		arr->data = new T[arr->capacity];
 		memcpy(arr->data, oldData, sizeof(T) * arr->len);
+		delete[] oldData;
 	}
 	//Move the data to make room for the inserted data
-	memcpy(&arr->data[i + numItems], &arr->data[i], sizeof(T) * (arr->len - i));
+	memmove(&arr->data[i + numItems], &arr->data[i], sizeof(T) * (arr->len - i));
 
 	//Insert the new data
 	memcpy(&arr->data[i], items, sizeof(T) * numItems);
@@ -131,7 +137,7 @@ Array<T> arrayCopy(const Array<T>* arr) {
 template <class T>
 void arrayRemoveAt(Array<T>* arr, int i) {
 	assert(i >= 0 && i < arr->len);
-	memcpy(&arr->data[i], &arr->data[i + 1], sizeof(T) * (arr->len - i));
+	memmove(&arr->data[i], &arr->data[i + 1], sizeof(T) * (arr->len - i));
 	arr->len--;
 }
 
@@ -141,7 +147,7 @@ void arrayRemoveRange(Array<T>* arr, int start, int end) {
 	assert(start >= 0 && start < arr->len);
 	assert(end >= 0 && end <= arr->len);
 	assert(start <= end);
-	memcpy(&arr->data[start], &arr->data[end], sizeof(T) * (arr->len - end));
+	memmove(&arr->data[start], &arr->data[end], sizeof(T) * (arr->len - end));
 	arr->len -= (end - start);
 }
 
