@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.1)
 
 if(UNIX)
-	file(COPY fonts/CodeNewRoman.ttf DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+	file(COPY fonts/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/fonts/)
 	#Create plugins folder
 	file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/plugins)
 elseif(WIN32)
+	#Copy the fonts to the binary folders
 	file(COPY fonts/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug/fonts/)
 	file(COPY fonts/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Release/fonts/)
 	file(COPY fonts/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/MinSizeRel/fonts/)
