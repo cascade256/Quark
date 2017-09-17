@@ -31,7 +31,7 @@
 
 
 Global* g;
-FileTreeItem fileTree;
+FileTreeFolder fileTree;
 
 void controlKeyHandler(int key, int action);
 
@@ -247,3 +247,4 @@ void controlKeyHandler(int key, int action) {
 		break;
 	}	
 }
+

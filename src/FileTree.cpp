@@ -4,7 +4,7 @@
 #else
 #include <dirent.h>
 #endif
-void createFileTree(const char* path, FileTreeItem* tree) {
+void createFileTree(const char* path, FileTreeFolder* tree) {
 	logI("Creating file tree: %s\n", path);
 	int pathLen = strlen(path);
 	tree->path = new char[pathLen + 1];
@@ -22,13 +22,10 @@ void createFileTree(const char* path, FileTreeItem* tree) {
 
 	tree->loaded = false;
 	tree->selected = false;
-	tree->type = DT_DIR;
-	tree->subItems = NULL;
-	tree->subItemCount = 0;
 }
 
 //path must be the absolute path to a directory, not a file
-void extendFileTree(FileTreeItem* tree) {
+void extendFileTree(FileTreeFolder* tree) {
 	assert(tree->path != NULL);
 	DIR* dir = opendir(tree->path);
 	if (dir == NULL) {
@@ -36,100 +33,120 @@ void extendFileTree(FileTreeItem* tree) {
 		return;
 	}
 	dirent* ent;
-	int numItems = 0;
 
-	//Get a count of the number of items in the directory
-	if (dir != NULL) {
-		ent = readdir(dir);
-		while (ent != NULL) {
-			numItems++;
-			ent = readdir(dir);
-		}
-	}
-	rewinddir(dir);//Rewind so it is ready for the actual read loop
-	numItems -= 2; //Ignore the /. and /.. folders
+	Array<FileTreeFolder> folders;
+	arrayInit(&folders);
+	Array<FileTreeFile> files;
+	arrayInit(&files);
 
 	int pathLen = strlen(tree->path);
 
-	//Set up its subItems
-	FileTreeItem* subItems = new FileTreeItem[numItems];
-
 	ent = readdir(dir);
-	while (ent != NULL && (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)) {
-		ent = readdir(dir);
-	}
-	for (int i = 0; i < numItems; i++) {
-		subItems[i].type = ent->d_type;
-
-		subItems[i].name = new char[strlen(ent->d_name) + 1];
-		strcpy(subItems[i].name, ent->d_name);
-
-#ifdef _WIN32
-		int itemPathLen = ent->d_namlen + pathLen + 2;//Add 2, one for the null byte, and one for the backslash
-		//TODO add bounds checking
-		subItems[i].path = new char[itemPathLen];
-		strcpy(subItems[i].path, tree->path);
-		strcat(subItems[i].path, "\\");
-		strcat(subItems[i].path, ent->d_name);
-
-#else
-		int itemPathLen = strlen(ent->d_name) + pathLen + 2;//Add 2, one for the null byte, and one for the backslash
-		//TODO add bounds checking
-		subItems[i].path = new char[itemPathLen];
-		strcpy(subItems[i].path, tree->path);
-		strcat(subItems[i].path, "/");
-		strcat(subItems[i].path, ent->d_name);
-#endif
-
-		subItems[i].subItemCount = 0;
-		subItems[i].subItems = NULL;
-		subItems[i].loaded = false;
-		subItems[i].selected = false;
-		logI("%s\n", subItems[i].name);
-		ent = readdir(dir);
-		while (ent != NULL && (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)) {
+	while (ent != NULL) {
+		if(strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
 			ent = readdir(dir);
+			continue;
 		}
+
+		if(ent->d_type == DT_DIR) {
+			//Find the index to insert the new item
+			int i = 0;
+			while(i < folders.len && strcmp(ent->d_name, folders[i].name) > 0) {
+				i++;
+			}
+
+			//Create the new FileTreeFolder
+			FileTreeFolder folder;
+			folder.loaded = false;
+			folder.selected = false;
+
+			folder.path = new char[strlen(ent->d_name) + pathLen + 2];//Add 2, one for the null byte, and one for the slash
+			strcpy(folder.path, tree->path);
+#ifdef _WIN32
+			strcat(folder.path, "\\");
+#else
+			strcat(folder.path, "/");
+#endif
+			strcat(folder.path, ent->d_name);
+
+			folder.name = new char[strlen(ent->d_name) + 1];
+			strcpy(folder.name, ent->d_name);
+
+			//Insert it into the array
+			arrayInsert(&folders, i, folder);
+		}
+		else if(ent->d_type == DT_REG) {
+			//Find the index to insert the new item
+			int i = 0;
+			while(i < files.len && strcmp(ent->d_name, files[i].name) > 0) {
+				i++;
+			}
+
+			//Create the new FileTreeFile
+			FileTreeFile file;
+			file.selected = false;
+
+			file.path = new char[strlen(ent->d_name) + pathLen + 2];//Add 2, one for the null byte, and one for the slash
+			strcpy(file.path, tree->path);
+#ifdef _WIN32
+			strcat(file.path, "\\");
+#else
+			strcat(file.path, "/");
+#endif
+			strcat(file.path, ent->d_name);
+
+			file.name = new char[strlen(ent->d_name) + 1];
+			strcpy(file.name, ent->d_name);
+
+			//Insert it into the array
+			arrayInsert(&files, i, file);
+		}
+		else {
+			logI("Unknown file system object type, skipping\n");
+		}
+		ent = readdir(dir);
 	}
+
 	closedir(dir);
-	tree->subItems = subItems;
-	tree->subItemCount = numItems;
+	tree->folders = folders;
+	tree->files = files;
 	tree->loaded = true;
 }
 
-void destroyFileTree(FileTreeItem* fileTree) {
-	for (int i = 0; i < fileTree->subItemCount; i++) {
-		destroyFileTree(&fileTree->subItems[i]);
+void destroyFileTree(FileTreeFolder* fileTree) {
+	for (int i = 0; i < fileTree->folders.len; i++) {
+		destroyFileTree(&fileTree->folders[i]);
+	}
+	if (fileTree->loaded) {
+		delete[] fileTree->folders.data;
+		fileTree->folders.data = NULL;
+		delete[] fileTree->files.data;
+		fileTree->files.data = NULL;
 	}
 	delete[] fileTree->name;
 	fileTree->name = NULL;
-	delete[] fileTree->subItems;
-	fileTree->subItems = NULL;
 	delete[] fileTree->path;
 	fileTree->path = NULL;
 }
 
-void drawFileTree(nk_context* ctx, FileTreeItem* tree, OpenFiles* files) {
-	bool isDir = (tree->type & DT_DIR) == DT_DIR;
-	if (!isDir) {
-		struct nk_rect bounds = nk_widget_bounds(ctx);
-		nk_selectable_label(ctx, tree->name, NK_TEXT_LEFT, &tree->selected);
-		if (nk_input_mouse_clicked(&ctx->input, NK_BUTTON_DOUBLE, bounds))
-		{
-			logI("File: %s was double clicked\n", tree->name);
-			addJob(jobbedOpenFile, (void*)tree->path);
+void drawFileTree(nk_context* ctx, FileTreeFolder* tree, OpenFiles* openFiles) {
+	if (nk_tree_push_hashed(ctx, NK_TREE_NODE, tree->name, NK_MINIMIZED, tree->path, strlen(tree->path), 0))
+	{
+		if (!tree->loaded) {
+			extendFileTree(tree);
 		}
-	}
-	else {
-		if (nk_tree_push_hashed(ctx, NK_TREE_NODE, tree->name, NK_MINIMIZED, tree->path, strlen(tree->path), 0))
-		{
-			if (!tree->loaded) {
-				extendFileTree(tree);
-			}
-			for (int i = 0; i < tree->subItemCount; i++) {
-				drawFileTree(ctx, &tree->subItems[i], files);
-			}
-			nk_tree_pop(ctx);
+		for (int i = 0; i < tree->folders.len; i++) {
+			drawFileTree(ctx, &tree->folders[i], openFiles);
 		}
+		for(int i = 0; i < tree->files.len; i++) {
+			struct nk_rect bounds = nk_widget_bounds(ctx);
+			nk_selectable_label(ctx, tree->files[i].name, NK_TEXT_LEFT, &tree->files[i].selected);
+			if (nk_input_mouse_clicked(&ctx->input, NK_BUTTON_DOUBLE, bounds))
+			{
+				logI("File: %s was double clicked\n", tree->files[i].name);
+				addJob(jobbedOpenFile, (void*)tree->files[i].path);
+			}
+		}
+		nk_tree_pop(ctx);
 	}
 }

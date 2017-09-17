@@ -4,18 +4,24 @@
 #include <cassert>
 #include "OpenFileManager.h"
 #include "JobManager.h"
+#include "Array.h"
 
-struct FileTreeItem {
-	int type;//dirent::d_type
+struct FileTreeFile {
 	char* name;
 	char* path;
-	FileTreeItem* subItems;
-	int subItemCount;
+	int selected;
+};
+
+struct FileTreeFolder {
+	char* name;
+	char* path;
+	Array<FileTreeFolder> folders;
+	Array<FileTreeFile> files;
 	int selected;
 	bool loaded;
 };
 
-void createFileTree(const char* path, FileTreeItem* fileTree);
-void extendFileTree(FileTreeItem* fileTree);
-void destroyFileTree(FileTreeItem* fileTree);
-void drawFileTree(nk_context* ctx, FileTreeItem* fileTree, OpenFiles* files);
+void createFileTree(const char* path, FileTreeFolder* fileTree);
+void extendFileTree(FileTreeFolder* fileTree);
+void destroyFileTree(FileTreeFolder* fileTree);
+void drawFileTree(nk_context* ctx, FileTreeFolder* fileTree, OpenFiles* files);
