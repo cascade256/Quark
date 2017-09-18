@@ -57,6 +57,44 @@ NK_API void                 nk_glfw3_mouse_button_callback(GLFWwindow *win, int 
 #define NK_GLFW_DOUBLE_CLICK_HI 0.2
 #endif
 
+#define NK_CHECK_FLAG(a, flags) (((a & flags) != 0))
+
+enum key_flags {
+	KEY_FLAG_DEFAULT	=	0,
+	KEY_FLAG_REPEATS	=	NK_FLAG(0),
+	KEY_FLAG_CHECK_CTRL =	NK_FLAG(1),
+	KEY_FLAG_CTRL		=	NK_FLAG(2)	//This is only checked if the flag above is set
+};
+
+struct nk_glfw_keymapping {
+	nk_keys nk_key;
+	int glfw_key;
+	nk_flags flags;
+};
+
+nk_glfw_keymapping keymap[] = {
+//	NK_KEY						GLFW_KEY				
+	{NK_KEY_DEL,				GLFW_KEY_DELETE,		KEY_FLAG_DEFAULT | KEY_FLAG_REPEATS	},
+	{NK_KEY_ENTER,				GLFW_KEY_ENTER,			KEY_FLAG_DEFAULT | KEY_FLAG_REPEATS	},
+	{NK_KEY_TAB,				GLFW_KEY_TAB,			KEY_FLAG_DEFAULT | KEY_FLAG_REPEATS	},
+	{NK_KEY_BACKSPACE,			GLFW_KEY_BACKSPACE,		KEY_FLAG_DEFAULT | KEY_FLAG_REPEATS	},
+	{NK_KEY_UP,					GLFW_KEY_UP,			KEY_FLAG_DEFAULT | KEY_FLAG_REPEATS	},
+	{NK_KEY_DOWN,				GLFW_KEY_DOWN,			KEY_FLAG_DEFAULT | KEY_FLAG_REPEATS	},
+	{NK_KEY_TEXT_LINE_START,	GLFW_KEY_HOME,			KEY_FLAG_DEFAULT					},
+	{NK_KEY_TEXT_LINE_END,		GLFW_KEY_END,			KEY_FLAG_DEFAULT					},
+	{NK_KEY_SCROLL_DOWN,		GLFW_KEY_PAGE_DOWN,		KEY_FLAG_DEFAULT | KEY_FLAG_REPEATS	},
+	{NK_KEY_SCROLL_UP,			GLFW_KEY_PAGE_UP,		KEY_FLAG_DEFAULT | KEY_FLAG_REPEATS	},
+	{NK_KEY_COPY,				GLFW_KEY_C,				KEY_FLAG_DEFAULT | KEY_FLAG_CHECK_CTRL | KEY_FLAG_CTRL},
+	{NK_KEY_PASTE,				GLFW_KEY_V,				KEY_FLAG_DEFAULT | KEY_FLAG_CHECK_CTRL | KEY_FLAG_CTRL},	
+	{NK_KEY_CUT,				GLFW_KEY_X,				KEY_FLAG_DEFAULT | KEY_FLAG_CHECK_CTRL | KEY_FLAG_CTRL},
+	{NK_KEY_TEXT_UNDO,			GLFW_KEY_Z,				KEY_FLAG_DEFAULT | KEY_FLAG_CHECK_CTRL | KEY_FLAG_CTRL},
+	{NK_KEY_TEXT_REDO,			GLFW_KEY_R,				KEY_FLAG_DEFAULT | KEY_FLAG_CHECK_CTRL | KEY_FLAG_CTRL},
+	{NK_KEY_TEXT_WORD_LEFT,		GLFW_KEY_LEFT,			KEY_FLAG_DEFAULT | KEY_FLAG_CHECK_CTRL | KEY_FLAG_CTRL},
+	{NK_KEY_TEXT_WORD_RIGHT,	GLFW_KEY_RIGHT,			KEY_FLAG_DEFAULT | KEY_FLAG_CHECK_CTRL | KEY_FLAG_CTRL},
+	{NK_KEY_LEFT,				GLFW_KEY_LEFT,			KEY_FLAG_DEFAULT | KEY_FLAG_CHECK_CTRL},
+	{NK_KEY_RIGHT,				GLFW_KEY_RIGHT,			KEY_FLAG_DEFAULT | KEY_FLAG_CHECK_CTRL}
+};
+
 struct nk_glfw_device {
     struct nk_buffer cmds;
     struct nk_draw_null_texture null;
@@ -96,6 +134,8 @@ static struct nk_glfw {
 	bool doubleClickDown;
 	struct nk_vec2 doubleClickPos;
 	ControlKeyCallback controlKeyCB;
+	bool* activatedKeys;
+	int numKeys;
 } glfw;
 
 #ifdef __APPLE__
@@ -328,9 +368,26 @@ nk_glfw3_render(enum nk_anti_aliasing AA, int max_vertex_buffer, int max_element
 
 NK_API void
 nk_glfw3_key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) {
+	//For CTRL+S and CTRL+F, which are not integrated into the rest of the input system, yet.
 	if (mods & GLFW_MOD_CONTROL) {
 		glfw.controlKeyCB(key, action);
 	}
+	if (action == GLFW_RELEASE) {
+		return;
+	}
+	for (int i = 0; i < glfw.numKeys; i++) {
+		if (key != keymap[i].glfw_key) { continue; }
+		if (NK_CHECK_FLAG(keymap[i].flags, KEY_FLAG_CHECK_CTRL)) {
+			if (NK_CHECK_FLAG(keymap[i].flags, KEY_FLAG_CTRL) != NK_CHECK_FLAG(mods, GLFW_MOD_CONTROL)) {
+				continue;
+			}
+		}
+		if (action == GLFW_REPEAT && !NK_CHECK_FLAG(keymap[i].flags, KEY_FLAG_REPEATS)) { continue; }
+
+		//It passed all the checks!
+		glfw.activatedKeys[i] = true;
+	}
+
 }
 
 NK_API void
@@ -478,6 +535,12 @@ nk_glfw3_init(GLFWwindow *win, enum nk_glfw_init_state init_state, ControlKeyCal
 	glfw.doubleClickDown = false;
 	glfw.doubleClickPos = nk_vec2(0, 0);
 
+	glfw.numKeys = sizeof(keymap) / sizeof(nk_glfw_keymapping);
+	glfw.activatedKeys = new bool[glfw.numKeys];
+	for (int i = 0; i < glfw.numKeys; i++) {
+		glfw.activatedKeys[i] = false;
+	}
+
     nk_glfw3_device_create();
     return &glfw.ctx;
 }
@@ -527,40 +590,15 @@ nk_glfw3_new_frame(void)
         glfwSetInputMode(glfw.win, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 #endif
 
-    nk_input_key(ctx, NK_KEY_DEL, glfwGetKey(win, GLFW_KEY_DELETE) == GLFW_PRESS);
-    nk_input_key(ctx, NK_KEY_ENTER, glfwGetKey(win, GLFW_KEY_ENTER) == GLFW_PRESS);
-    nk_input_key(ctx, NK_KEY_TAB, glfwGetKey(win, GLFW_KEY_TAB) == GLFW_PRESS);
-    nk_input_key(ctx, NK_KEY_BACKSPACE, glfwGetKey(win, GLFW_KEY_BACKSPACE) == GLFW_PRESS);
-    nk_input_key(ctx, NK_KEY_UP, glfwGetKey(win, GLFW_KEY_UP) == GLFW_PRESS);
-    nk_input_key(ctx, NK_KEY_DOWN, glfwGetKey(win, GLFW_KEY_DOWN) == GLFW_PRESS);
-    nk_input_key(ctx, NK_KEY_TEXT_START, glfwGetKey(win, GLFW_KEY_HOME) == GLFW_PRESS);
-    nk_input_key(ctx, NK_KEY_TEXT_END, glfwGetKey(win, GLFW_KEY_END) == GLFW_PRESS);
-    nk_input_key(ctx, NK_KEY_SCROLL_START, glfwGetKey(win, GLFW_KEY_HOME) == GLFW_PRESS);
-    nk_input_key(ctx, NK_KEY_SCROLL_END, glfwGetKey(win, GLFW_KEY_END) == GLFW_PRESS);
-    nk_input_key(ctx, NK_KEY_SCROLL_DOWN, glfwGetKey(win, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS);
-    nk_input_key(ctx, NK_KEY_SCROLL_UP, glfwGetKey(win, GLFW_KEY_PAGE_UP) == GLFW_PRESS);
-    nk_input_key(ctx, NK_KEY_SHIFT, glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS||
-                                    glfwGetKey(win, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS);
+	for (int i = 0; i < glfw.numKeys; i++) {
+		if (glfw.activatedKeys[i]) {
+			nk_input_key(ctx, keymap[i].nk_key, true);
+			ctx->input.keyboard.keys[keymap[i].nk_key].clicked++;
+		}
+		glfw.activatedKeys[i] = false;
+	}
 
-    if (glfwGetKey(win, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
-        glfwGetKey(win, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS) {
-        nk_input_key(ctx, NK_KEY_COPY, glfwGetKey(win, GLFW_KEY_C) == GLFW_PRESS);
-        nk_input_key(ctx, NK_KEY_PASTE, glfwGetKey(win, GLFW_KEY_V) == GLFW_PRESS);
-        nk_input_key(ctx, NK_KEY_CUT, glfwGetKey(win, GLFW_KEY_X) == GLFW_PRESS);
-        nk_input_key(ctx, NK_KEY_TEXT_UNDO, glfwGetKey(win, GLFW_KEY_Z) == GLFW_PRESS);
-        nk_input_key(ctx, NK_KEY_TEXT_REDO, glfwGetKey(win, GLFW_KEY_R) == GLFW_PRESS);
-        nk_input_key(ctx, NK_KEY_TEXT_WORD_LEFT, glfwGetKey(win, GLFW_KEY_LEFT) == GLFW_PRESS);
-        nk_input_key(ctx, NK_KEY_TEXT_WORD_RIGHT, glfwGetKey(win, GLFW_KEY_RIGHT) == GLFW_PRESS);
-        nk_input_key(ctx, NK_KEY_TEXT_LINE_START, glfwGetKey(win, GLFW_KEY_B) == GLFW_PRESS);
-        nk_input_key(ctx, NK_KEY_TEXT_LINE_END, glfwGetKey(win, GLFW_KEY_E) == GLFW_PRESS);
-    } else {
-        nk_input_key(ctx, NK_KEY_LEFT, glfwGetKey(win, GLFW_KEY_LEFT) == GLFW_PRESS);
-        nk_input_key(ctx, NK_KEY_RIGHT, glfwGetKey(win, GLFW_KEY_RIGHT) == GLFW_PRESS);
-        nk_input_key(ctx, NK_KEY_COPY, 0);
-        nk_input_key(ctx, NK_KEY_PASTE, 0);
-        nk_input_key(ctx, NK_KEY_CUT, 0);
-        nk_input_key(ctx, NK_KEY_SHIFT, 0);
-    }
+	nk_input_key(ctx, NK_KEY_SHIFT, glfwGetKey(win, GLFW_KEY_RIGHT_SHIFT) || glfwGetKey(win, GLFW_KEY_LEFT_SHIFT));
 
     glfwGetCursorPos(win, &x, &y);
     nk_input_motion(ctx, (int)x, (int)y);
@@ -584,6 +622,7 @@ nk_glfw3_new_frame(void)
 NK_API
 void nk_glfw3_shutdown(void)
 {
+	delete[] glfw.activatedKeys;
     nk_font_atlas_clear(&glfw.atlas);
     nk_free(&glfw.ctx);
     nk_glfw3_device_destroy();
