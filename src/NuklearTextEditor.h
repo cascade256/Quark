@@ -755,48 +755,43 @@ retry:
 		} break;
 
 	case NK_KEY_DOWN: {
-		struct nk_text_find find;
-		struct nk_text_edit_row row;
-		int i, sel = shift_mod;
 
-		if (state->single_line) {
-			/* on windows, up&down in single-line behave like left&right */
-			key = NK_KEY_RIGHT;
-			goto retry;
+		if (shift_mod) {
+			if (NK_MY_TEXT_HAS_SELECTION(state)) {
+				state->cursor.line++;
+				state->select_end = state->cursor;
+			}
+			else {
+				state->select_start = state->cursor;
+				state->cursor.line++;
+				state->select_end = state->cursor;
+			}
+		}
+		else {
+			state->cursor.line++;
 		}
 
-		if (sel)
-			nk_my_textedit_prep_selection_at_cursor(state);
-		else if (NK_MY_TEXT_HAS_SELECTION(state))
-			nk_my_textedit_move_to_last(state);
-
-		/* compute current position of cursor point */
-
-		//TODO: Due to different glyph sizes this is not a robust solution for UTF, but should
-		//work fine for ASCII
-		state->cursor.line++;
 		nk_my_textedit_clamp(state);
 
 	} break;
 
 	case NK_KEY_UP: {
-		struct nk_text_find find;
-		struct nk_text_edit_row row;
-		int i, sel = shift_mod;
 
-		if (state->single_line) {
-			/* on windows, up&down become left&right */
-			key = NK_KEY_LEFT;
-			goto retry;
+		if (shift_mod) {
+			if (NK_MY_TEXT_HAS_SELECTION(state)) {
+				state->cursor.line--;
+				state->select_end = state->cursor;
+			}
+			else {
+				state->select_start = state->cursor;
+				state->cursor.line--;
+				state->select_end = state->cursor;
+			}
+		}
+		else {
+			state->cursor.line--;
 		}
 
-		if (sel)
-			nk_my_textedit_prep_selection_at_cursor(state);
-		else if (NK_MY_TEXT_HAS_SELECTION(state))
-			nk_my_textedit_move_to_first(state);
-
-		/* compute current position of cursor point */
-		state->cursor.line--;
 		nk_my_textedit_clamp(state);
 
 	} break;
