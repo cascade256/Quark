@@ -30,12 +30,41 @@ extern "C" {
 			logI("Not a python file!\n");
 			return;
 		}
-
+		
+		logI("Python file to run: %s\n", path);
+#ifdef _WIN32
 		char cmd[1024];
 		snprintf(cmd, 1024, "start cmd /K \"python %s\"", path);
 
-		logI("Python file to run: %s\n", path);
 		system(cmd);
+#elif __linux__
+        	const char* tempTemplate = "QuarkRunPythonScript_XXXXXX";
+        	char* tempName = new char[strlen(tempTemplate) + 1];
+        	strcpy(tempName, tempTemplate);
+       		int file = mkstemp(tempName);
+		
+		if(file < 1) {
+			logE("Failed to create temp file for script, cannot launch python!\n");
+			return;
+		}
+        
+        	const char* scriptTemplate = "python %s; read -p \"Press any key to exit\" -n1; echo";
+        	int res = dprintf(file, scriptTemplate, "test.py");       
+		
+		if(res < 1) {
+			logE("Failed to write to the temp script, cannot launch python!\n");
+			return;
+		}	
+
+        	const char* commandTemplate = "x-terminal-emulator -e \"bash %s\"";
+        	char buff[2048];
+        	memset(buff, 0, sizeof(buff));
+        	sprintf(buff, commandTemplate, tempName);
+        	system(buff);
+
+        	unlink(tempName);
+        	delete [] tempName;		
+#endif
 	}
 
 	void colorize(Array<TextLine>* lines, int editedLine) {
