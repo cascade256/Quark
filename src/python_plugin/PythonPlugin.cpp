@@ -41,28 +41,29 @@ extern "C" {
         	const char* tempTemplate = "QuarkRunPythonScript_XXXXXX";
         	char* tempName = new char[strlen(tempTemplate) + 1];
         	strcpy(tempName, tempTemplate);
-       		int file = mkstemp(tempName);
+       		int file = mkstemp(tempName);//The script file is self deleting
 		
 		if(file < 1) {
 			logE("Failed to create temp file for script, cannot launch python!\n");
 			return;
 		}
         
-        	const char* scriptTemplate = "python %s; read -p \"Press any key to exit\" -n1; echo";
+        	const char* scriptTemplate = "python %s; read -p \"Press any key to exit\" -n1; echo; rm -- \"$0\"";
         	int res = dprintf(file, scriptTemplate, "test.py");       
 		
 		if(res < 1) {
 			logE("Failed to write to the temp script, cannot launch python!\n");
 			return;
 		}	
+		fsync(file);		
 
         	const char* commandTemplate = "x-terminal-emulator -e \"bash %s\"";
         	char buff[2048];
         	memset(buff, 0, sizeof(buff));
         	sprintf(buff, commandTemplate, tempName);
+		logD("Command: %s\n", buff);
         	system(buff);
 
-        	unlink(tempName);
         	delete [] tempName;		
 #endif
 	}
