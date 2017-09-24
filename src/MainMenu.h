@@ -10,16 +10,9 @@ struct MenuItem {
 
 struct SubMenu{
 	char* name;
-	MenuItem* items;
-	int numItems;
-};
-
-
-struct MainMenu {
-	SubMenu* subMenus = NULL;
-	int numSubMenus = 0;
+	Array<MenuItem> items;
 };
 
 void drawMainMenu();
-void addMenuItem(int menuIDX, const char* item, Func onClick);
+void addMenuItem(int menuIDX, const char* name, Func onClick);
 int addMenu(const char* name);

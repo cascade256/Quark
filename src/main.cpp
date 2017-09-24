@@ -55,6 +55,8 @@ int main() {
 	g->colorizers = hashmap_new();
 	g->autocompleters = hashmap_new();
 	g->activeFileIndex = 0;
+
+	arrayInit(&g->menus);
 	addMenuItem(addMenu("File"), "Open", NULL);
 
 	loadPlugins();

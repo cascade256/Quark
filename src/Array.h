@@ -4,9 +4,9 @@
 
 template <class T>
 struct Array {
-	T* data;
-	int len;
-	int capacity;
+	T* data = NULL;
+	int len = 0;
+	int capacity = 0;
 	T& operator[](int index) {
 		return data[index];
 	}
@@ -21,6 +21,7 @@ void arrayInit(Array<T>* arr) {
 
 template <class T>
 void arrayAdd(Array<T>* arr, T item) {
+	assert(arr->data);
 	if (arr->len >= arr->capacity) {
 		//We need to expand the array
 		T* oldData = arr->data;

@@ -22,6 +22,6 @@ struct Global {
 	map_t autocompleters;
 	Theme theme;
 	nk_color background;
-	MainMenu mainMenu;
+	Array<SubMenu> menus;
 };
 
