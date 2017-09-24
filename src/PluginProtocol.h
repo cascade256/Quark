@@ -34,7 +34,8 @@ enum Token_Type {//The underscore is needed due to a name conflict with a Window
 	TOK_IDENTIFIER,
 	TOK_RESERVED,
 	TOK_NUMBER,
-	TOK_STRING
+	TOK_STRING,
+	TOK_COUNT
 };
 
 

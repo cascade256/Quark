@@ -103,7 +103,7 @@ void openFile(const char* path) {
 	openFile.edit.mode = NK_TEXT_EDIT_MODE_INSERT;
 	openFile.edit.filter = nk_filter_default;
 	openFile.edit.scrollbar = nk_vec2(0, 0);
-	openFile.edit.colorTable = g->theme;
+	openFile.edit.colorTable = g->theme.codeColors;
 
 	for (int i = 0; i < lines.len; i++) {
 		assert(lines.data[i].text.len >= 0);

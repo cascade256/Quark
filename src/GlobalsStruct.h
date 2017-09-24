@@ -8,6 +8,7 @@
 #include "hashmap.h"
 #include "tinycthread.h"
 #include "MainMenu.h"
+#include "Theme.h"
 
 struct GLFWwindow;
 
@@ -19,7 +20,7 @@ struct Global {
 	nk_context* ctx;
 	map_t colorizers;
 	map_t autocompleters;
-	nk_color* theme;
+	Theme theme;
 	nk_color background;
 	MainMenu mainMenu;
 };
