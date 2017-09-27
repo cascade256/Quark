@@ -1,7 +1,7 @@
 #pragma once
 
 #include "NuklearAndConfig.h"
-#include "nuklear\nuklear_glfw_gl3.h"
+#include "nuklear/nuklear_glfw_gl3.h"
 
 struct Theme {
 	nk_font_atlas* atlas;

@@ -71,7 +71,7 @@ void initJobManager() {
 	logI("NumThreads: %i\n", numThreads);
 
 	for (int i = 0; i < numThreads; i++) {
-		thrd_create(&threads[i], launchFunc, (void*)i);
+		thrd_create(&threads[i], launchFunc, (void*)(intptr_t)i);
 	}
 
 	jobs = NULL;
