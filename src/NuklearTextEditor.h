@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "Array.h"
-
+#include <cmath>
 struct TextCursor {
 	int line;
 	int col;
@@ -37,7 +37,13 @@ struct nk_my_text_edit {
 	AutoComplete_Func autocomplete = NULL;
 	AutoCompleteData* acData;
 	bool acActive;
+
+	char* lineNumberBuffer;
+	int lineNumBuffLen;
 };
+
+NK_API void
+nk_init_my_text_edit(struct nk_my_text_edit* edit, nk_color* colors, int numLines);
 
 NK_API nk_flags
 nk_my_text_editor(struct nk_context *ctx, nk_flags flags,
@@ -59,6 +65,27 @@ text_cursor(int line, int col);
 #ifdef NK_IMPLEMENTATION
 
 #define NK_MY_TEXT_HAS_SELECTION(s)   (!((s)->select_start.line == (s)->select_end.line && (s)->select_start.col == (s)->select_end.col))
+
+NK_API void
+nk_init_my_text_edit(struct nk_my_text_edit* edit, nk_color* colors, int numLines) {
+	edit->undo.undo_point = 0;
+	edit->undo.undo_char_point = 0;
+	edit->undo.redo_point = NK_TEXTEDIT_UNDOSTATECOUNT;
+	edit->undo.redo_char_point = NK_TEXTEDIT_UNDOCHARCOUNT;
+	edit->select_end.line = edit->select_start.line = edit->cursor.line = 0;
+	edit->select_end.col = edit->select_start.col = edit->cursor.col = 0;
+	edit->has_preferred_x = 0;
+	edit->preferred_x = 0;
+	edit->cursor_at_end_of_line = 0;
+	edit->initialized = 1;
+	edit->single_line = 0;
+	edit->mode = NK_TEXT_EDIT_MODE_INSERT;
+	edit->filter = nk_filter_default;
+	edit->scrollbar = nk_vec2(0, 0);
+	edit->colorTable = colors;
+	edit->lineNumBuffLen = floor(log10(abs(numLines))) + 1;//Calculate the number of digits in the number of lines
+	edit->lineNumberBuffer = new char[edit->lineNumBuffLen];
+}
 
 NK_API TextCursor
 text_cursor(int line, int col) {
@@ -1081,6 +1108,22 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 		area.w = NK_MAX(0, area.w - style->scrollbar_size.x);
 	row_height = font->height + style->row_padding;
 
+	float prefixWidth = 0;
+	//Calculate the prefixWidth
+	{
+		if (floor(log10(abs(edit->lines.len))) + 1 > edit->lineNumBuffLen) {
+			//There are more lines than we have digits to represent! Add more digits!
+			edit->lineNumBuffLen = floor(log10(abs(edit->lines.len))) + 1;
+			delete[] edit->lineNumberBuffer;
+			edit->lineNumberBuffer = new char[edit->lineNumBuffLen];
+		}
+		//This queries the font for the width of a ' ' character, which we assume is the same as the width of the 0-9 characters.
+		//This is a reasonably safe assumption because it should be a monospaced font.
+		char c = ' ';
+		float charWidth = font->width(font->userdata, font->height, &c, 1);
+		prefixWidth = edit->lineNumBuffLen * charWidth + 20;
+	}
+
 	/* calculate clipping rectangle */
 	old_clip = out->clip;
 	nk_unify(&clip, &old_clip, area.x, area.y, area.x + area.w, area.y + area.h);
@@ -1098,15 +1141,6 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 		const enum nk_text_edit_type type = (flags & NK_EDIT_MULTILINE) ?
 			NK_TEXT_EDIT_MULTI_LINE : NK_TEXT_EDIT_SINGLE_LINE;
 		nk_my_textedit_clear_state(edit, type, filter);
-		if (flags & NK_EDIT_ALWAYS_INSERT_MODE)
-			edit->mode = NK_TEXT_EDIT_MODE_INSERT;
-		if (flags & NK_EDIT_AUTO_SELECT)
-			select_all = nk_true;
-		if (flags & NK_EDIT_GOTO_END_ON_ACTIVATE) {
-			edit->cursor.line = edit->lines.len;
-			edit->cursor.col = edit->lines[edit->lines.len - 1].text.len;
-			in = 0;
-		}
 	}
 	else if (!edit->active) edit->mode = NK_TEXT_EDIT_MODE_VIEW;
 	if (flags & NK_EDIT_READ_ONLY)
@@ -1120,7 +1154,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 	if (edit->active && in)
 	{
 		int shift_mod = in->keyboard.keys[NK_KEY_SHIFT].down;
-		const float mouse_x = (in->mouse.pos.x - area.x) + edit->scrollbar.x;
+		const float mouse_x = (in->mouse.pos.x - area.x - prefixWidth) + edit->scrollbar.x;
 		const float mouse_y = (in->mouse.pos.y - area.y) + edit->scrollbar.y;
 
 		/* mouse click handler */
@@ -1246,25 +1280,12 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 		*state = NK_WIDGET_STATE_ACTIVE;
 	else nk_widget_state_reset(state);
 
-	if (is_hovered)
-		*state |= NK_WIDGET_STATE_HOVERED;
+	/* draw background frame */
+	nk_stroke_rect(out, bounds, style->rounding, style->border, style->border_color);
+	nk_fill_rect(out, bounds, style->rounding, style->normal.data.color);
 
-	/* DRAW EDIT */
-	{/* select background colors/images  */
-		const struct nk_style_item *background;
-		if (*state & NK_WIDGET_STATE_ACTIVED)
-			background = &style->active;
-		else if (*state & NK_WIDGET_STATE_HOVER)
-			background = &style->hover;
-		else background = &style->normal;
-
-		/* draw background frame */
-		if (background->type == NK_STYLE_ITEM_COLOR) {
-			nk_stroke_rect(out, bounds, style->rounding, style->border, style->border_color);
-			nk_fill_rect(out, bounds, style->rounding, background->data.color);
-		}
-		else nk_draw_image(out, bounds, &background->data.image, nk_white); 
-	}
+	//Find cursor pos
+	struct nk_vec2 cursor_pos = nk_my_get_cursor_pos(edit, font, row_height);
 
 	area.w = NK_MAX(0, area.w - style->cursor_size);
 	if (edit->active)
@@ -1278,16 +1299,13 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 		const char *select_end_ptr = 0;
 
 		/* 2D pixel positions */
-		struct nk_vec2 cursor_pos = nk_vec2(0, 0);
 		struct nk_vec2 selection_offset_start = nk_vec2(0, 0);
 		struct nk_vec2 selection_offset_end = nk_vec2(0, 0);
 
 		text_size.y = edit->lines.len * row_height;
-		//Find cursor pos
-		cursor_pos = nk_my_get_cursor_pos(edit, font, row_height);
 
+		//Scrollbar
 		{
-			/* scrollbar */
 			if (cursor_follow)
 			{
 				/* update scrollbar to follow cursor */
@@ -1301,14 +1319,12 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 				}
 				else edit->scrollbar.x = 0;
 
-				if (flags & NK_EDIT_MULTILINE) {
-					/* vertical scroll */
-					if (cursor_pos.y < edit->scrollbar.y)
-						edit->scrollbar.y = NK_MAX(0.0f, cursor_pos.y - row_height);
-					if (cursor_pos.y >= edit->scrollbar.y + area.h)
-						edit->scrollbar.y = edit->scrollbar.y + row_height;
-				}
-				else edit->scrollbar.y = 0;
+				/* vertical scroll */
+				if (cursor_pos.y < edit->scrollbar.y)
+					edit->scrollbar.y = NK_MAX(0.0f, cursor_pos.y - row_height);
+				if (cursor_pos.y >= edit->scrollbar.y + area.h)
+					edit->scrollbar.y = edit->scrollbar.y + row_height;
+
 			}
 			if (edit->cursorMoved) {
 				/* vertical scroll */
@@ -1320,31 +1336,31 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 			}
 
 			/* scrollbar widget */
-			if (flags & NK_EDIT_MULTILINE)
-			{
-				nk_flags ws;
-				struct nk_rect scroll;
-				float scroll_target;
-				float scroll_offset;
-				float scroll_step;
-				float scroll_inc;
 
-				scroll = area;
-				scroll.x = (bounds.x + bounds.w - style->border) - style->scrollbar_size.x;
-				scroll.w = style->scrollbar_size.x;
+			nk_flags ws;
+			struct nk_rect scroll;
+			float scroll_target;
+			float scroll_offset;
+			float scroll_step;
+			float scroll_inc;
 
-				scroll_offset = edit->scrollbar.y;
-				scroll_step = scroll.h * 0.10f;
-				scroll_inc = scroll.h * 0.01f;
-				scroll_target = text_size.y;
-				edit->scrollbar.y = nk_do_scrollbarv(&ws, out, scroll, 0,
-					scroll_offset, scroll_target, scroll_step, scroll_inc,
-					&style->scrollbar, in, font);
-			}
+			scroll = area;
+			scroll.x = (bounds.x + bounds.w - style->border) - style->scrollbar_size.x;
+			scroll.w = style->scrollbar_size.x;
+
+			scroll_offset = edit->scrollbar.y;
+			scroll_step = scroll.h * 0.10f;
+			scroll_inc = scroll.h * 0.01f;
+			scroll_target = text_size.y;
+			edit->scrollbar.y = nk_do_scrollbarv(&ws, out, scroll, 0,
+				scroll_offset, scroll_target, scroll_step, scroll_inc,
+				&style->scrollbar, in, font);
 		}
+	}
 
-		/* draw text */
-		{struct nk_color background_color;
+	/* draw text */
+	{
+		struct nk_color background_color;
 		struct nk_color text_color;
 		struct nk_color sel_background_color;
 		struct nk_color sel_text_color;
@@ -1353,57 +1369,84 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 		const struct nk_style_item *background;
 		nk_push_scissor(out, clip);
 
-		/* select correct colors to draw */
-		if (*state & NK_WIDGET_STATE_ACTIVED) {
-			background = &style->active;
-			text_color = style->text_active;
-			sel_text_color = style->selected_text_hover;
-			sel_background_color = style->selected_hover;
-			cursor_color = style->cursor_hover;
-			cursor_text_color = style->cursor_text_hover;
-		}
-		else if (*state & NK_WIDGET_STATE_HOVER) {
-			background = &style->hover;
-			text_color = style->text_hover;
-			sel_text_color = style->selected_text_hover;
-			sel_background_color = style->selected_hover;
-			cursor_text_color = style->cursor_text_hover;
-			cursor_color = style->cursor_hover;
-		}
-		else {
-			background = &style->normal;
-			text_color = style->text_normal;
-			sel_text_color = style->selected_text_normal;
-			sel_background_color = style->selected_normal;
-			cursor_color = style->cursor_normal;
-			cursor_text_color = style->cursor_text_normal;
-		}
-		if (background->type == NK_STYLE_ITEM_IMAGE)
-			background_color = nk_rgba(0, 0, 0, 0);
-		else background_color = background->data.color;
+		background = &style->normal;
+		text_color = style->text_normal;
+		sel_text_color = style->selected_text_normal;
+		sel_background_color = nk_rgba(255, 255, 255, 50);;
+		cursor_color = style->cursor_normal;
+		cursor_text_color = style->cursor_text_normal;
+		background_color = background->data.color;
 
+		//Draw a line to visually seperate the prefix area from the code
+		nk_fill_rect(out, nk_rect(area.x + prefixWidth, area.y, 1, area.h), 0, nk_rgb(50, 50, 50));
 
+		//Draw the code
 		{
 			int startRow = edit->scrollbar.y / row_height;
 			int numRows = NK_MIN(area.h / row_height, edit->lines.len - startRow);
 			float yOffset = startRow * row_height - edit->scrollbar.y;
-			struct nk_rect bounds;
-			bounds.x = area.x;
-			bounds.w = area.w;
-			bounds.h = row_height;
+
 			struct nk_text t;
 			t.background = background_color;
 			t.padding = style->padding;
 			t.text = style->text_normal;
+			struct nk_text lineNumText;
+			lineNumText.background = background_color;
+			lineNumText.padding = style->padding;
+			lineNumText.text = nk_rgb(20, 150, 200);
 			TextLine line;
-			//printf("Start(%i, %i) End(%i, %i)\n", edit->select_start.line, edit->select_start.col,
-				//edit->select_end.x, edit->select_end.y);
-			for (int i = 0; i < numRows; i++) {
-				bounds.y = area.y + i * row_height + yOffset;
-				line = edit->lines[i + startRow];
 
-				if (NK_MY_TEXT_HAS_SELECTION(edit)) {
+			NK_MEMSET(edit->lineNumberBuffer, ' ', edit->lineNumBuffLen);
 
+			//Fill the lineNumberBuffer with the startRow
+			int j = startRow + 1;
+			int i = 1;
+			do {
+				edit->lineNumberBuffer[edit->lineNumBuffLen - i] = j % 10 + '0';
+				i++;
+				j = j / 10;
+			} while (j > 0);
+
+			struct nk_rect bounds;
+
+			bounds.h = row_height;
+
+			for (int i = startRow; i < numRows + startRow; i++) {
+				bounds.x = area.x;
+				bounds.w = prefixWidth;
+				bounds.y = area.y + (i - startRow) * row_height + yOffset;
+				line = edit->lines[i];
+
+				nk_widget_text(out, bounds, edit->lineNumberBuffer, edit->lineNumBuffLen, &lineNumText, NK_TEXT_ALIGN_RIGHT, font);
+				//Increment the lineNumberBuffer
+				{
+					int j = edit->lineNumBuffLen - 1;
+					bool carry = false;
+
+					do {
+						if (edit->lineNumberBuffer[j] == ' ') {
+							edit->lineNumberBuffer[j] = '0';
+						}
+
+						edit->lineNumberBuffer[j]++;
+						if (edit->lineNumberBuffer[j] > '9') {
+							edit->lineNumberBuffer[j] = '0';
+							carry = true;
+						}
+						else {
+							carry = false;
+						}
+						j--;
+					} while (carry);
+				}
+
+				bounds.x = area.x + prefixWidth;
+				bounds.w = area.w - prefixWidth;
+
+				if (!NK_MY_TEXT_HAS_SELECTION(edit)) {
+					nk_widget_colored_text(out, bounds, line.text.data, line.text.len, line.colors.data, line.colors.len, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
+				}
+				else {
 					//Make sure selectStart and selectEnd are in the correct order
 					//Calling nk_my_textedit_sortselection would fix this, but calling it
 					//during a drag select messes up the selection
@@ -1422,8 +1465,8 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 
 					struct nk_rect tempBounds;
 					tempBounds = bounds;
-					if (selectStart.line == i + startRow) {
-						if (selectEnd.line == i + startRow) {
+					if (selectStart.line == i) {
+						if (selectEnd.line == i) {
 							//The selected text is all on one line, so split it into three sections
 							//before selected, selected, and after selected
 							int startByte = nk_my_bytes_to_glyph(&line, selectStart.col);
@@ -1431,19 +1474,17 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 							tempBounds.w = bounds.w;
 							nk_widget_colored_text(out, tempBounds, line.text.data, startByte, line.colors.data, selectStart.col, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
 
-
 							tempBounds.x += width;
 							int midByte = nk_my_bytes_to_glyph(&line, selectEnd.col);
 							width = font->width(font->userdata, font->height, &line.text[startByte], midByte - startByte);
 							tempBounds.w = bounds.w + tempBounds.x - bounds.x;
-							t.background = style->selected_normal;
+							t.background = sel_background_color;
 							nk_widget_colored_text(out, tempBounds, &line.text[startByte], midByte - startByte, &line.colors[selectStart.col], selectEnd.col - selectStart.col, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
 							t.background = background_color;
 
 							tempBounds.x += width;
 							tempBounds.w = bounds.w + tempBounds.x - bounds.x;
 							nk_widget_colored_text(out, tempBounds, &line.text[midByte], line.text.len - midByte, &line.colors[selectEnd.col], line.colors.len - selectEnd.col, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
-							continue;
 						}
 						else {
 							//The selected text starts on this line
@@ -1458,92 +1499,51 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 							//int midByte = nk_my_bytes_to_glyph(&line, selectEnd.col);
 							width = font->width(font->userdata, font->height, &line.text[startByte], line.text.len - startByte);
 							tempBounds.w = bounds.w + tempBounds.x - bounds.x;
-							t.background = style->selected_normal;
+							t.background = sel_background_color;
 							nk_widget_colored_text(out, tempBounds, &line.text[startByte], line.text.len - startByte, &line.colors[selectStart.col], line.colors.len - selectStart.col, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
 							t.background = background_color;
-							continue;
 						}
 					}
-					else if (selectEnd.line == i + startRow) {
+					else if (selectEnd.line == i) {
 						//The selected text ends on this line
 						int endByte = nk_my_bytes_to_glyph(&line, selectEnd.col);
 						float width = font->width(font->userdata, font->height, line.text.data, endByte);
 						tempBounds.w = bounds.w;
-						t.background = style->selected_normal;
+						t.background = sel_background_color;
 						nk_widget_colored_text(out, tempBounds, line.text.data, endByte, line.colors.data, selectEnd.col, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
 						t.background = background_color;
 
 						tempBounds.x += width;
 						tempBounds.w = bounds.w + tempBounds.x - bounds.x;
 						nk_widget_colored_text(out, tempBounds, &line.text[endByte], line.text.len - endByte, &line.colors[selectEnd.col], line.colors.len - selectEnd.col, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
-						continue;
 					}
-					else if (selectStart.line < i + startRow &&
-						i + startRow < selectEnd.line) {
+					else if (selectStart.line < i && i < selectEnd.line) {
 						//The entire line is selected
-						t.background = style->selected_normal;
+						t.background = sel_background_color;
 						nk_widget_colored_text(out, bounds, line.text.data, line.text.len, line.colors.data, line.colors.len, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
 						t.background = background_color;
-						continue;
+					}
+					else {
+						//This line is not affected by the selection
+						nk_widget_colored_text(out, bounds, line.text.data, line.text.len, line.colors.data, line.colors.len, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
 					}
 				}
-
-				nk_widget_colored_text(out, bounds, line.text.data, line.text.len, line.colors.data, line.colors.len, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
 			}
 		}
 
-		/* cursor */
+		//Draw cursor
 		if (!NK_MY_TEXT_HAS_SELECTION(edit))
 		{
 			struct nk_rect cursor;
 			cursor.w = 1;
 			cursor.h = font->height;
-			cursor.x = area.x + cursor_pos.x - edit->scrollbar.x;
+			cursor.x = area.x + prefixWidth + cursor_pos.x - edit->scrollbar.x;
 			cursor.y = area.y + cursor_pos.y + row_height / 2.0f - cursor.h / 2.0f;
 			cursor.y -= edit->scrollbar.y;
-			nk_fill_rect(out, cursor, 0, cursor_color);
-		}}
-	}
-	else {
-		/* not active so just draw text */
-		const struct nk_style_item *background;
-		struct nk_color background_color;
-		struct nk_color text_color;
-		nk_push_scissor(out, clip);
-		if (*state & NK_WIDGET_STATE_ACTIVED) {
-			background = &style->active;
-			text_color = style->text_active;
-		}
-		else if (*state & NK_WIDGET_STATE_HOVER) {
-			background = &style->hover;
-			text_color = style->text_hover;
-		}
-		else {
-			background = &style->normal;
-			text_color = style->text_normal;
-		}
-		if (background->type == NK_STYLE_ITEM_IMAGE)
-			background_color = nk_rgba(0, 0, 0, 0);
-		else background_color = background->data.color;
-
-		int startRow = edit->scrollbar.y / row_height;
-		int numRows = NK_MIN(area.h / row_height, edit->lines.len - startRow);
-
-		struct nk_rect bounds;
-		bounds.x = area.x;
-		bounds.w = area.w;
-		bounds.h = row_height;
-		struct nk_text t;
-		t.background = background_color;
-		t.padding = style->padding;
-		t.text = style->text_normal;
-		TextLine line;
-		for (int i = 0; i < numRows; i++) {
-			bounds.y = area.y + i * row_height;
-			line = edit->lines[i];
-			nk_widget_colored_text(out, bounds, line.text.data, line.text.len, line.colors.data, line.colors.len, edit->colorTable, &t, NK_TEXT_ALIGN_LEFT, font);
+			nk_fill_rect(out, cursor, 0, style->cursor_normal);
 		}
 	}
+
 	nk_push_scissor(out, old_clip);
 	return ret;
 }

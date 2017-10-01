@@ -89,21 +89,7 @@ void openFile(const char* path) {
 	openFile.name[nameLen + 1] = '\0';
 	openFile.nameLen = nameLen + 1;
 	assert(openFile.name);
-	openFile.edit.undo.undo_point = 0;
-	openFile.edit.undo.undo_char_point = 0;
-	openFile.edit.undo.redo_point = NK_TEXTEDIT_UNDOSTATECOUNT;
-	openFile.edit.undo.redo_char_point = NK_TEXTEDIT_UNDOCHARCOUNT;
-	openFile.edit.select_end.line = openFile.edit.select_start.line = openFile.edit.cursor.line = 0;
-	openFile.edit.select_end.col = openFile.edit.select_start.col = openFile.edit.cursor.col = 0;
-	openFile.edit.has_preferred_x = 0;
-	openFile.edit.preferred_x = 0;
-	openFile.edit.cursor_at_end_of_line = 0;
-	openFile.edit.initialized = 1;
-	openFile.edit.single_line = 0;
-	openFile.edit.mode = NK_TEXT_EDIT_MODE_INSERT;
-	openFile.edit.filter = nk_filter_default;
-	openFile.edit.scrollbar = nk_vec2(0, 0);
-	openFile.edit.colorTable = g->theme.codeColors;
+	nk_init_my_text_edit(&openFile.edit, g->theme.codeColors, lines.len);
 
 	for (int i = 0; i < lines.len; i++) {
 		assert(lines.data[i].text.len >= 0);
