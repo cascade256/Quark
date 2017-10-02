@@ -16,6 +16,9 @@ elseif(WIN32)
 	file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Release/plugins)
 	file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MinSizeRel/plugins)
 	file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/plugins)
+	
+	add_compile_options(/wd4244 /wd4267 /wd4800)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 #Build Quark

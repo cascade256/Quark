@@ -1,18 +1,16 @@
-#define _CRT_SECURE_NO_WARNINGS
-#include <stdio.h>
-#include <string>
-#include "gl3w.h"
-
-#include "NuklearAndConfig.h"
-#include "nuklear/nuklear_glfw_gl3.h"
-
-
 #ifdef _WIN32
 #include "dirent.h"
 #else
 #include <dirent.h>
 #include <unistd.h>
 #endif
+
+#include <stdio.h>
+#include <string>
+#include "gl3w.h"
+
+#include "NuklearAndConfig.h"
+#include "nuklear/nuklear_glfw_gl3.h"
 
 #include <string.h>
 #include "FileTree.h"

@@ -163,7 +163,6 @@ extern "C" {
 
 	void parseProjectFile() {
 		arrayInit(&project.targets);
-		char* buffer;
 
 		JSON_Value* root;
 		root = json_parse_file("build.json");

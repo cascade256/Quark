@@ -651,7 +651,6 @@ NK_INTERN void
 nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mod,
 	const struct nk_user_font *font, float row_height)
 {
-retry:
 	switch (key)
 	{
 	case NK_KEY_NONE:
@@ -1028,7 +1027,6 @@ NK_API int
 nk_my_textedit_paste(struct nk_my_text_edit *state, char const *ctext, int len)
 {
 	/* API paste: replace existing selection with passed-in text */
-	int glyphs;
 	const char *text = (const char *)ctext;
 	if (state->mode == NK_TEXT_EDIT_MODE_VIEW) return 0;
 
@@ -1234,9 +1232,6 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 			int cut = nk_input_is_key_pressed(in, NK_KEY_CUT);
 			if ((copy || cut) && (flags & NK_EDIT_CLIPBOARD))
 			{
-				int glyph_len;
-				nk_rune unicode;
-				const char *text;
 				nk_my_textedit_sortselection(edit);
 
 				if (edit->clip.copy)

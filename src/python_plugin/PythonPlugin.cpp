@@ -1,5 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
-
 #include "../GlobalsStruct.h"
 #include "../ParsingUtils.h"
 #include "keywords.h"
