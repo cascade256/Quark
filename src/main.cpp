@@ -45,6 +45,10 @@ void drawTextEditor() {
 	drawTextEditor(g->ctx, &g->files);
 }
 
+void glfwErrorCallback(int error, const char* desc) {
+	logE("GLFW Error: %i, %s\n", error, desc);
+}
+
 int main() {
 	initLog(LOG_DEBUG);
 	initJobManager();
@@ -59,8 +63,19 @@ int main() {
 
 	loadPlugins();
 
-	glfwInit();
+	glfwSetErrorCallback(glfwErrorCallback);
+	int result = glfwInit();
+	if(result == false) {
+		printf("Could not initialize GLFW!\n");
+		return 1;
+	}
+
 	g->win = glfwCreateWindow(1200, 800, "Quark", NULL, NULL);
+	if(g->win == NULL) {
+		printf("Could not create a window!\n");
+		glfwTerminate();
+		return 1;
+	}
 	glfwMakeContextCurrent(g->win);
 	gl3wInit();
 
@@ -131,6 +146,5 @@ void controlKeyHandler(int key, int action) {
 	case GLFW_KEY_F:
 		showSearchDialog();
 		break;
-	}	
+	}
 }
-
