@@ -44,7 +44,7 @@ void drawTextEditor(nk_context* ctx, OpenFiles* files) {
 				breakpointArea.w = row_height;
 				breakpointArea.x = region.x;
 				breakpointArea.y = region.y + tabHeight;
-				
+
 				float scroll = f->edit.scrollbar.y;
 
 				//nk_fill_rect(&ctx->current->buffer, breakpointArea, 0, nk_rgba(0, 100, 100, 100));
@@ -61,7 +61,7 @@ void drawTextEditor(nk_context* ctx, OpenFiles* files) {
 					else {
 						arrayRemoveAt(&f->breakpoints, idx);
 					}
-					
+
 					logD("line: %i\n", line);
 				}
 
@@ -82,10 +82,9 @@ void drawTextEditor(nk_context* ctx, OpenFiles* files) {
 
 				//Draw the text editor part
 				nk_layout_row_push(ctx, region.w - row_height);
-				//printf("Active file index: %i\n", activeFileIndex);
 
 				nk_style_set_font(ctx, &g->theme.codeFont->handle);
-				nk_flags flags = nk_my_text_editor(ctx, NK_EDIT_CLIPBOARD | NK_EDIT_SIMPLE | NK_EDIT_MULTILINE | NK_EDIT_ALLOW_TAB, &f->edit, nk_filter_default);
+				nk_flags flags = nk_my_text_editor(ctx, NK_EDIT_CLIPBOARD | NK_EDIT_ALLOW_TAB, &f->edit);
 				nk_style_set_font(ctx, &g->theme.UIFont->handle);
 
 				//Check to see if the file has not been flagged as unsaved yet, but was just changed

@@ -10,10 +10,16 @@ struct TextCursor {
 	int col;
 };
 
+enum nk_myedit_flags {
+    NK_MY_EDIT_DEFAULT                  = 0,
+    NK_MY_EDIT_READ_ONLY                = NK_FLAG(0),
+    NK_MY_EDIT_NO_HORIZONTAL_SCROLL     = NK_FLAG(1),
+	NK_MY_EDIT_CHANGED					= NK_FLAG(2)
+};
+
 struct nk_my_text_edit {
 	struct nk_my_clipboard clip;
 	Array<TextLine> lines;
-	nk_plugin_filter filter;
 	struct nk_vec2 scrollbar;
 
 	TextCursor cursor;
@@ -23,7 +29,6 @@ struct nk_my_text_edit {
 	unsigned char cursor_at_end_of_line;
 	unsigned char initialized;
 	unsigned char has_preferred_x;
-	unsigned char single_line;
 	unsigned char active;
 	unsigned char padding1;
 	float preferred_x;
@@ -47,7 +52,7 @@ nk_init_my_text_edit(struct nk_my_text_edit* edit, nk_color* colors, int numLine
 
 NK_API nk_flags
 nk_my_text_editor(struct nk_context *ctx, nk_flags flags,
-	struct nk_my_text_edit *edit, nk_plugin_filter filter);
+	struct nk_my_text_edit *edit);
 
 NK_API struct nk_vec2
 nk_my_get_cursor_pos(struct nk_my_text_edit* edit, const struct nk_user_font* font, float row_height);
@@ -78,9 +83,7 @@ nk_init_my_text_edit(struct nk_my_text_edit* edit, nk_color* colors, int numLine
 	edit->preferred_x = 0;
 	edit->cursor_at_end_of_line = 0;
 	edit->initialized = 1;
-	edit->single_line = 0;
 	edit->mode = NK_TEXT_EDIT_MODE_INSERT;
-	edit->filter = nk_filter_default;
 	edit->scrollbar = nk_vec2(0, 0);
 	edit->colorTable = colors;
 	edit->lineNumBuffLen = floor(log10(abs(numLines))) + 1;//Calculate the number of digits in the number of lines
@@ -97,14 +100,14 @@ text_cursor(int line, int col) {
 
 NK_INTERN nk_flags
 nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
-	struct nk_rect bounds, nk_flags flags, nk_plugin_filter filter,
+	struct nk_rect bounds, nk_flags flags,
 	struct nk_my_text_edit *edit, const struct nk_style_edit *style,
 	struct nk_input *in, const struct nk_user_font *font);
 
 
 NK_API nk_flags
 nk_my_text_editor(struct nk_context *ctx, nk_flags flags,
-	struct nk_my_text_edit *edit, nk_plugin_filter filter)
+	struct nk_my_text_edit *edit)
 {
 	struct nk_window *win;
 	struct nk_style *style;
@@ -134,24 +137,12 @@ nk_my_text_editor(struct nk_context *ctx, nk_flags flags,
 	/* check if edit is currently hot item */
 	hash = win->edit.seq++;
 	if (win->edit.active && hash == win->edit.name) {
-		if (flags & NK_EDIT_NO_CURSOR)
-		{
-			edit->cursor.line = edit->lines.len;
-			edit->cursor.col = edit->lines[edit->lines.len - 1].text.len;
-		}
-		/*if (!(flags & NK_EDIT_SELECTABLE)) {
-			edit->select_start = edit->cursor;
-			edit->select_end = edit->cursor;
-		}*/
-		if (flags & NK_EDIT_CLIPBOARD)
-			edit->clip = ctx->my_clip;
+		edit->clip = ctx->my_clip;
 	}
 
-	filter = (!filter) ? nk_filter_default : filter;
 	prev_state = (unsigned char)edit->active;
-	in = (flags & NK_EDIT_READ_ONLY) ? 0 : in;
-	ret_flags = nk_my_do_edit(&ctx->last_widget_state, &win->buffer, bounds, flags,
-		filter, edit, &style->edit, in, style->font);
+	in = (flags & NK_MY_EDIT_READ_ONLY) ? 0 : in;
+	ret_flags = nk_my_do_edit(&ctx->last_widget_state, &win->buffer, bounds, flags, edit, &style->edit, in, style->font);
 
 	if (ctx->last_widget_state & NK_WIDGET_STATE_HOVER)
 		ctx->style.cursor_active = ctx->style.cursors[NK_CURSOR_TEXT];
@@ -576,7 +567,7 @@ nk_my_textedit_insert_glyph(struct TextLine* line, TextCursor* cursor, const cha
 	cursor->col++;
 }
 
-NK_API void 
+NK_API void
 nk_my_textedit_text(struct nk_my_text_edit* state, const char* text, int total_len) {
 	nk_rune unicode;
 	int glyph_len;
@@ -584,7 +575,7 @@ nk_my_textedit_text(struct nk_my_text_edit* state, const char* text, int total_l
 
 	NK_ASSERT(state);
 	NK_ASSERT(text);
-	NK_ASSERT(state->cursor.line >= 0 && state->cursor.line < state->lines.len);//This triggers if the cursor is on an invalid line 
+	NK_ASSERT(state->cursor.line >= 0 && state->cursor.line < state->lines.len);//This triggers if the cursor is on an invalid line
 	NK_ASSERT(state->cursor.col >= 0 && state->cursor.col <= state->lines[state->cursor.line].colors.len);//This triggers if the cursor is on an invalid column
 
 	glyph_len = nk_utf_decode(text, &unicode, total_len);
@@ -624,7 +615,7 @@ nk_my_textedit_text(struct nk_my_text_edit* state, const char* text, int total_l
 			assert(line->colors.len == line->text.len);
 			assert(newLine.colors.len == newLine.text.len);
 		}
-		else 
+		else
 		{
 			if (!NK_MY_TEXT_HAS_SELECTION(state)) {
 				TextLine* line = &state->lines[state->cursor.line];
@@ -931,8 +922,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 }
 
 NK_INTERN void
-nk_my_textedit_clear_state(struct nk_my_text_edit *state, enum nk_text_edit_type type,
-	nk_plugin_filter filter)
+nk_my_textedit_clear_state(struct nk_my_text_edit *state)
 {
 	/* reset the state to default */
 	state->undo.undo_point = 0;
@@ -947,9 +937,7 @@ nk_my_textedit_clear_state(struct nk_my_text_edit *state, enum nk_text_edit_type
 	state->preferred_x = 0;
 	state->cursor_at_end_of_line = 0;
 	state->initialized = 1;
-	state->single_line = (unsigned char)(type == NK_TEXT_EDIT_SINGLE_LINE);
 	state->mode = NK_TEXT_EDIT_MODE_VIEW;
-	state->filter = filter;
 	state->scrollbar = nk_vec2(0, 0);
 }
 
@@ -1077,7 +1065,7 @@ nk_my_get_cursor_pos(struct nk_my_text_edit* edit, const struct nk_user_font* fo
 
 NK_INTERN nk_flags
 nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
-	struct nk_rect bounds, nk_flags flags, nk_plugin_filter filter,
+	struct nk_rect bounds, nk_flags flags,
 	struct nk_my_text_edit *edit, const struct nk_style_edit *style,
 	struct nk_input *in, const struct nk_user_font *font)
 {
@@ -1102,8 +1090,8 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 	area.y = bounds.y + style->padding.y + style->border;
 	area.w = bounds.w - (2.0f * style->padding.x + 2 * style->border);
 	area.h = bounds.h - (2.0f * style->padding.y + 2 * style->border);
-	if (flags & NK_EDIT_MULTILINE)
-		area.w = NK_MAX(0, area.w - style->scrollbar_size.x);
+	area.w = NK_MAX(0, area.w - style->scrollbar_size.x);
+
 	row_height = font->height + style->row_padding;
 
 	float prefixWidth = 0;
@@ -1136,12 +1124,10 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 
 	/* (de)activate text editor */
 	if (!prev_state && edit->active) {
-		const enum nk_text_edit_type type = (flags & NK_EDIT_MULTILINE) ?
-			NK_TEXT_EDIT_MULTI_LINE : NK_TEXT_EDIT_SINGLE_LINE;
-		nk_my_textedit_clear_state(edit, type, filter);
+		nk_my_textedit_clear_state(edit);
 	}
 	else if (!edit->active) edit->mode = NK_TEXT_EDIT_MODE_VIEW;
-	if (flags & NK_EDIT_READ_ONLY)
+	if (flags & NK_MY_EDIT_READ_ONLY)
 		edit->mode = NK_TEXT_EDIT_MODE_VIEW;
 
 	ret = (edit->active) ? NK_EDIT_ACTIVE : NK_EDIT_INACTIVE;
@@ -1204,42 +1190,34 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 		}
 
 		/* text input */
-		edit->filter = filter;
 		if (in->keyboard.text_len) {
 			nk_my_textedit_text(edit, in->keyboard.text, in->keyboard.text_len);
 			cursor_follow = nk_true;
 			in->keyboard.text_len = 0;
-			ret |= NK_EDIT_CHANGED;
+			ret |= NK_MY_EDIT_CHANGED;
 		}
 
 		/* enter key handler */
 		if (nk_input_is_key_pressed(in, NK_KEY_ENTER)) {
 			cursor_follow = nk_true;
-			if (flags & NK_EDIT_CTRL_ENTER_NEWLINE && shift_mod)
-				nk_my_textedit_text(edit, "\n", 1);
-			else if (flags & NK_EDIT_SIG_ENTER)
-				ret |= NK_EDIT_COMMITED;
-			else {
-				nk_my_textedit_text(edit, "\n", 1);
-				ret |= NK_EDIT_CHANGED;
-			}
+			nk_my_textedit_text(edit, "\n", 1);
+			ret |= NK_MY_EDIT_CHANGED;
 		}
 
 		/* cut & copy handler */
-
 		{
 			int copy = nk_input_is_key_pressed(in, NK_KEY_COPY);
 			int cut = nk_input_is_key_pressed(in, NK_KEY_CUT);
-			if ((copy || cut) && (flags & NK_EDIT_CLIPBOARD))
+			if ((copy || cut))
 			{
 				nk_my_textedit_sortselection(edit);
 
 				if (edit->clip.copy)
 					edit->clip.copy(edit->clip.userdata, edit->lines.data, edit->lines.len, edit->select_start, edit->select_end);
-				if (cut && !(flags & NK_EDIT_READ_ONLY)) {
+				if (cut && !(flags & NK_MY_EDIT_READ_ONLY)) {
 					nk_my_textedit_cut(edit);
 					cursor_follow = nk_true;
-					ret |= NK_EDIT_CHANGED;
+					ret |= NK_MY_EDIT_CHANGED;
 				}
 			}
 		}
@@ -1248,10 +1226,10 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 
 		{
 			int paste = nk_input_is_key_pressed(in, NK_KEY_PASTE);
-			if (paste && (flags & NK_EDIT_CLIPBOARD) && edit->clip.paste) {
+			if (paste && edit->clip.paste) {
 				edit->clip.paste(edit->clip.userdata, edit);
 				cursor_follow = nk_true;
-				ret |= NK_EDIT_CHANGED;
+				ret |= NK_MY_EDIT_CHANGED;
 			}
 		}
 
@@ -1265,7 +1243,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 				nk_my_textedit_insert_glyph(&edit->lines[edit->cursor.line], &edit->cursor, "\t", 1);
 #endif
 				cursor_follow = nk_true;
-				ret |= NK_EDIT_CHANGED;
+				ret |= NK_MY_EDIT_CHANGED;
 			}
 		}
 	}
@@ -1304,7 +1282,7 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 			if (cursor_follow)
 			{
 				/* update scrollbar to follow cursor */
-				if (!(flags & NK_EDIT_NO_HORIZONTAL_SCROLL)) {
+				if (!(flags & NK_MY_EDIT_NO_HORIZONTAL_SCROLL)) {
 					/* horizontal scroll */
 					const float scroll_increment = area.w * 0.25f;
 					if (cursor_pos.x < edit->scrollbar.x)
