@@ -4,6 +4,16 @@
 #else
 #include <dirent.h>
 #endif
+
+//Case insensitive string comparison
+int strcasecmp(const char* a, const char* b) {
+	int i = 0;
+	while((a[i] != '\0') && (b[i] != '\0') && (tolower(a[i]) == tolower(b[i]))) {
+		i++;
+	}
+	return tolower(a[i]) - tolower(b[i]);
+}
+
 void createFileTree(const char* path, FileTreeFolder* tree) {
 	logI("Creating file tree: %s\n", path);
 	int pathLen = strlen(path);
@@ -51,7 +61,7 @@ void extendFileTree(FileTreeFolder* tree) {
 		if(ent->d_type == DT_DIR) {
 			//Find the index to insert the new item
 			int i = 0;
-			while(i < folders.len && strcmp(ent->d_name, folders[i].name) > 0) {
+			while(i < folders.len && strcasecmp(ent->d_name, folders[i].name) > 0) {
 				i++;
 			}
 
@@ -78,7 +88,7 @@ void extendFileTree(FileTreeFolder* tree) {
 		else if(ent->d_type == DT_REG) {
 			//Find the index to insert the new item
 			int i = 0;
-			while(i < files.len && strcmp(ent->d_name, files[i].name) > 0) {
+			while(i < files.len && strcasecmp(ent->d_name, files[i].name) > 0) {
 				i++;
 			}
 
