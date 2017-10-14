@@ -28,10 +28,12 @@ struct nk_my_text_edit {
 	unsigned char mode;
 	unsigned char cursor_at_end_of_line;
 	unsigned char initialized;
-	unsigned char has_preferred_x;
+
+	bool has_preferred_col;
+	int preferred_col;
+
 	unsigned char active;
 	unsigned char padding1;
-	float preferred_x;
 	struct nk_text_undo_state undo;
 
 	nk_color* colorTable;
@@ -79,8 +81,8 @@ nk_init_my_text_edit(struct nk_my_text_edit* edit, nk_color* colors, int numLine
 	edit->undo.redo_char_point = NK_TEXTEDIT_UNDOCHARCOUNT;
 	edit->select_end.line = edit->select_start.line = edit->cursor.line = 0;
 	edit->select_end.col = edit->select_start.col = edit->cursor.col = 0;
-	edit->has_preferred_x = 0;
-	edit->preferred_x = 0;
+	edit->has_preferred_col = false;
+	edit->preferred_col = 0;
 	edit->cursor_at_end_of_line = 0;
 	edit->initialized = 1;
 	edit->mode = NK_TEXT_EDIT_MODE_INSERT;
@@ -437,7 +439,7 @@ nk_my_textedit_move_to_first(struct nk_my_text_edit *state)
 		nk_my_textedit_sortselection(state);
 		state->cursor = state->select_start;
 		state->select_end = state->select_start;
-		state->has_preferred_x = 0;
+		state->has_preferred_col = false;
 	}
 }
 
@@ -450,7 +452,7 @@ nk_my_textedit_move_to_last(struct nk_my_text_edit *state)
 		nk_my_textedit_clamp(state);
 		state->cursor = state->select_end;
 		state->select_start = state->select_end;
-		state->has_preferred_x = 0;
+		state->has_preferred_col = false;
 	}
 }
 
@@ -541,7 +543,7 @@ nk_my_textedit_delete(struct nk_my_text_edit *state, TextCursor start, TextCurso
 		}
 	}
 
-	state->has_preferred_x = 0;
+	state->has_preferred_col = false;
 }
 
 NK_API void
@@ -553,7 +555,7 @@ nk_my_textedit_delete_selection(struct nk_my_text_edit *state)
 	if (NK_MY_TEXT_HAS_SELECTION(state)) {
 		nk_my_textedit_delete(state, state->select_start, state->select_end);
 		state->select_end = state->cursor = state->select_start;
-		state->has_preferred_x = 0;
+		state->has_preferred_col = false;
 	}
 }
 
@@ -657,13 +659,13 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 	case NK_KEY_TEXT_UNDO:
 		//nk_my_textedit_undo(state);
 		printf("TODO: Implement UNDO\n");
-		state->has_preferred_x = 0;
+		state->has_preferred_col = false;
 		break;
 
 	case NK_KEY_TEXT_REDO:
 		//nk_my_textedit_redo(state);
 		printf("TODO: Implement REDO\n");
-		state->has_preferred_x = 0;
+		state->has_preferred_col = false;
 		break;
 
 	case NK_KEY_AUTOCOMPLETE:
@@ -681,7 +683,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 
 	case NK_KEY_TEXT_SELECT_ALL:
 		nk_my_textedit_select_all(state);
-		state->has_preferred_x = 0;
+		state->has_preferred_col = false;
 		break;
 
 	case NK_KEY_TEXT_INSERT_MODE:
@@ -706,7 +708,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 			if (state->select_end.col > 0)
 				--state->select_end.col;
 			state->cursor = state->select_end;
-			state->has_preferred_x = 0;
+			state->has_preferred_col = false;
 		}
 		else {
 			/* if currently there's a selection,
@@ -715,7 +717,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 				nk_my_textedit_move_to_first(state);
 			else if (state->cursor.col > 0)
 				--state->cursor.col;
-			state->has_preferred_x = 0;
+			state->has_preferred_col = false;
 		} break;
 
 	case NK_KEY_RIGHT:
@@ -725,7 +727,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 			++state->select_end.col;
 			nk_my_textedit_clamp(state);
 			state->cursor = state->select_end;
-			state->has_preferred_x = 0;
+			state->has_preferred_col = false;
 		}
 		else {
 			/* if currently there's a selection,
@@ -734,7 +736,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 				nk_my_textedit_move_to_last(state);
 			else ++state->cursor.col;
 			nk_my_textedit_clamp(state);
-			state->has_preferred_x = 0;
+			state->has_preferred_col = false;
 		} break;
 
 	case NK_KEY_TEXT_WORD_LEFT:
@@ -788,6 +790,14 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 			state->cursor.line++;
 		}
 
+		if (state->has_preferred_col) {
+			state->cursor.col = state->preferred_col;
+		}
+		else {
+			state->has_preferred_col = true;
+			state->preferred_col = state->cursor.col;
+		}
+
 		nk_my_textedit_clamp(state);
 
 	} break;
@@ -809,6 +819,14 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 			state->cursor.line--;
 		}
 
+		if (state->has_preferred_col) {
+			state->cursor.col = state->preferred_col;
+		}
+		else {
+			state->has_preferred_col = true;
+			state->preferred_col = state->cursor.col;
+		}
+
 		nk_my_textedit_clamp(state);
 
 	} break;
@@ -825,7 +843,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 				nk_my_textedit_delete(state, state->cursor, end);
 			}
 		}
-		state->has_preferred_x = 0;
+		state->has_preferred_col = false;
 		break;
 
 	case NK_KEY_BACKSPACE:
@@ -851,7 +869,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 				state->cursor.col = state->lines[state->cursor.line].colors.len;
 			}
 		}
-		state->has_preferred_x = 0;
+		state->has_preferred_col = false;
 		break;
 
 	case NK_KEY_TEXT_START:
@@ -859,12 +877,12 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 			nk_my_textedit_prep_selection_at_cursor(state);
 			state->cursor.line = state->select_end.line = 0;
 			state->cursor.col = state->select_end.col = 0;
-			state->has_preferred_x = 0;
+			state->has_preferred_col = false;
 		}
 		else {
 			state->cursor.line = state->select_start.line = state->select_end.line = 0;
 			state->cursor.col = state->select_start.col = state->select_end.col = 0;
-			state->has_preferred_x = 0;
+			state->has_preferred_col = false;
 		}
 		break;
 
@@ -873,14 +891,14 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 			nk_my_textedit_prep_selection_at_cursor(state);
 			state->cursor.line = state->select_end.line = state->lines.len - 1;
 			state->cursor.col = state->select_end.col = state->lines[state->cursor.line].text.len;
-			state->has_preferred_x = 0;
+			state->has_preferred_col = false;
 		}
 		else {
 			state->cursor.line = state->lines.len - 1;
 			state->cursor.col = state->lines[state->cursor.line].text.len;
 			state->select_start.line = state->select_end.line = 0;
 			state->select_start.col = state->select_end.col = 0;
-			state->has_preferred_x = 0;
+			state->has_preferred_col = false;
 		}
 		break;
 
@@ -891,7 +909,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 			//if (state->string.len && state->cursor == state->string.len)
 			//	--state->cursor;
 			state->cursor.col = state->select_end.col = 0;
-			state->has_preferred_x = 0;
+			state->has_preferred_col = false;
 		}
 		else {
 			//if (state->string.len && state->cursor == state->string.len)
@@ -899,7 +917,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 			nk_my_textedit_clamp(state);
 			nk_my_textedit_move_to_first(state);
 			state->cursor.col = 0;
-			state->has_preferred_x = 0;
+			state->has_preferred_col = false;
 		}
 	} break;
 
@@ -907,7 +925,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 		if (shift_mod) {
 			nk_my_textedit_clamp(state);
 			nk_my_textedit_prep_selection_at_cursor(state);
-			state->has_preferred_x = 0;
+			state->has_preferred_col = false;
 			state->cursor.col = state->lines[state->cursor.line].colors.len;
 			state->select_end = state->cursor;
 		}
@@ -915,7 +933,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 			nk_my_textedit_clamp(state);
 			nk_my_textedit_move_to_first(state);
 
-			state->has_preferred_x = 0;
+			state->has_preferred_col = false;
 			state->cursor.col = state->lines[state->cursor.line].colors.len;
 		}} break;
 	}
@@ -933,16 +951,13 @@ nk_my_textedit_clear_state(struct nk_my_text_edit *state)
 	state->select_end.col = state->select_start.col = 0;
 	state->cursor.line = 0;
 	state->cursor.col = 0;
-	state->has_preferred_x = 0;
-	state->preferred_x = 0;
+	state->has_preferred_col = false;
+	state->preferred_col = 0;
 	state->cursor_at_end_of_line = 0;
 	state->initialized = 1;
 	state->mode = NK_TEXT_EDIT_MODE_VIEW;
 	state->scrollbar = nk_vec2(0, 0);
 }
-
-
-
 
 NK_INTERN TextCursor
 nk_my_textedit_locate_coord(struct nk_my_text_edit *edit, float x, float y,
@@ -994,7 +1009,7 @@ nk_my_textedit_click(struct nk_my_text_edit *state, float x, float y,
 	state->cursor = nk_my_textedit_locate_coord(state, x, y, font, row_height);
 	state->select_start = state->cursor;
 	state->select_end = state->cursor;
-	state->has_preferred_x = 0;
+	state->has_preferred_col = false;
 }
 
 NK_INTERN void
@@ -1035,7 +1050,7 @@ nk_my_textedit_cut(struct nk_my_text_edit *state)
 		return 0;
 	if (NK_MY_TEXT_HAS_SELECTION(state)) {
 		nk_my_textedit_delete_selection(state); /* implicitly clamps */
-		state->has_preferred_x = 0;
+		state->has_preferred_col = false;
 		return 1;
 	}
 	return 0;
