@@ -598,6 +598,21 @@ nk_my_textedit_text(struct nk_my_text_edit* state, const char* text, int total_l
 			TextLine newLine;
 			arrayInit(&newLine.text);
 			arrayInit(&newLine.colors);
+
+
+
+			//Auto indent
+			int numIndentChars = 0;
+			{
+				TextCursor c = state->cursor;//Cursor for where to insert the whitespace
+				c.col = 0;
+				while (line->text[numIndentChars] == ' ' || line->text[numIndentChars] == '\t') {
+					nk_my_textedit_insert_glyph(&newLine, &c, &line->text[numIndentChars], 1);
+					numIndentChars++;
+				}
+			}
+
+			//Check if line needs split
 			if (state->cursor.col < line->text.len) {
 				//The line needs to be split at cursor->col
 				int byteIndex = nk_my_bytes_to_glyph(line, state->cursor.col);
@@ -613,9 +628,10 @@ nk_my_textedit_text(struct nk_my_text_edit* state, const char* text, int total_l
 			}
 
 			state->cursor.line++;
-			state->cursor.col = 0;
-			assert(line->colors.len == line->text.len);
-			assert(newLine.colors.len == newLine.text.len);
+			state->cursor.col = numIndentChars;
+
+			assert(line->colors.len == line->text.len);//Only true for ASCII, not for Unicode
+			assert(newLine.colors.len == newLine.text.len);//Only true for ASCII, not for Unicode
 		}
 		else
 		{
@@ -1425,7 +1441,9 @@ nk_my_do_edit(nk_flags *state, struct nk_command_buffer *out,
 							carry = false;
 						}
 						j--;
-					} while (carry);
+						//Check j just in case lines are added in between the time the prefix width is calculated and
+						//now, and there is not room for all of the digits in lineNumberBuffer
+					} while (carry && j >= 0);
 				}
 
 				bounds.x = area.x + prefixWidth;
