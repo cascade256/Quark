@@ -27,7 +27,7 @@ project (Quark C CXX)
 set(CMAKE_CXX_STANDARD 11)
 include_directories(libs/libglfw3/include)
 
-add_executable(Quark src/FileTree.cpp src/FindDialog.cpp src/gl3w.cpp src/hashmap.cpp src/JobManager.cpp src/LayoutManager.cpp src/Logger.cpp src/main.cpp src/MainMenu.cpp src/OpenFileManager.cpp src/ParsingUtils.cpp src/PluginManager.cpp src/TextEditor.cpp src/tinycthread.c src/nuklear/nuklear.cpp src/Theme.cpp)
+add_executable(Quark src/FileTree.cpp src/FindDialog.cpp src/gl3w.cpp src/hashmap.cpp src/JobManager.cpp src/LayoutManager.cpp src/Logger.cpp src/main.cpp src/MainMenu.cpp src/OpenFileManager.cpp src/ParsingUtils.cpp src/PluginManager.cpp src/TextEditor.cpp src/tinycthread.c src/nuklear/nuklear.cpp src/Theme.cpp src/dyad.c)
 
 if(UNIX)
     find_package(Threads REQUIRED)
