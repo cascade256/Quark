@@ -44,7 +44,8 @@ add_executable(Quark
 		src/tinycthread.c 
 		src/nuklear/nuklear.cpp 
 		src/Theme.cpp
-		src/dyad.c)
+		src/dyad.c
+)
 
 if(UNIX)
     find_package(Threads REQUIRED)
@@ -63,11 +64,9 @@ if(UNIX)
 elseif(WIN32)
 	target_link_libraries(Quark 
 			${CMAKE_CURRENT_SOURCE_DIR}/libs/libglfw3/win64/glfw3.lib 
+			${CMAKE_CURRENT_SOURCE_DIR}/libs/libglfw3/win32/glfw3.lib
 			opengl32
-	)
-	target_link_libraries(Quark 
-			${CMAKE_CURRENT_SOURCE_DIR}/libs/libglfw3/win32/glfw3.lib 
-			opengl32
+			ws2_32
 	)
 	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Quark)
 endif()
