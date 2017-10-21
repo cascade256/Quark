@@ -38,7 +38,7 @@ NK_API void                 nk_glfw3_char_callback(GLFWwindow *win, unsigned int
 NK_API void                 nk_gflw3_scroll_callback(GLFWwindow *win, double xoff, double yoff);
 NK_API void                 nk_glfw3_mouse_button_callback(GLFWwindow *win, int button, int action, int mods);
 
-NK_API void					nk_glfw3_load_image(const char* path, struct nk_image* image);
+NK_API bool					nk_glfw3_load_image(const char* path, struct nk_image* image);
 
 #endif
 /*
@@ -637,8 +637,7 @@ void nk_glfw3_load_image(const char* path, struct nk_image* image) {
 	int w, h, numChannels;
 	unsigned char* data = stbi_load(path, &w, &h, &numChannels, STBI_rgb_alpha);
 	if (data == NULL) {
-		image = NULL;
-		return;
+		return false;
 	}
 
 	GLuint tex;
@@ -659,6 +658,7 @@ void nk_glfw3_load_image(const char* path, struct nk_image* image) {
 	image->region[1] = 0;
 	image->region[2] = w;
 	image->region[3] = h;
+	return true;
 }
 
 #endif
