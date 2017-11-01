@@ -633,7 +633,7 @@ void nk_glfw3_shutdown(void)
 }
 
 NK_API
-void nk_glfw3_load_image(const char* path, struct nk_image* image) {
+bool nk_glfw3_load_image(const char* path, struct nk_image* image) {
 	int w, h, numChannels;
 	unsigned char* data = stbi_load(path, &w, &h, &numChannels, STBI_rgb_alpha);
 	if (data == NULL) {

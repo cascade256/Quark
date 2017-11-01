@@ -22,6 +22,8 @@ struct nk_my_text_edit {
 	Array<TextLine> lines;
 	struct nk_vec2 scrollbar;
 
+	//The col member of the following 3 cursors is the number of bytes into the line,
+	//not the number of actual characters
 	TextCursor cursor;
 	TextCursor select_start;
 	TextCursor select_end;
@@ -30,7 +32,7 @@ struct nk_my_text_edit {
 	unsigned char initialized;
 
 	bool has_preferred_col;
-	int preferred_col;
+	int preferred_col;//The column it the cursor was at visually. e.g. tabs will take up NK_TAB_SIZE columns
 
 	unsigned char active;
 	unsigned char padding1;
@@ -656,6 +658,66 @@ nk_my_textedit_text(struct nk_my_text_edit* state, const char* text, int total_l
 	nk_my_on_text_change(state);
 }
 
+//This is used to move between lines while taking the extra width of tabs into account
+NK_INTERN void
+nk_my_textedit_move_line(struct nk_my_text_edit* state, TextCursor* cursor, int numLines) {
+	//Find where the cursor should be on the new line
+	int numCharWidths;
+	if (state->has_preferred_col)
+	{
+		numCharWidths = state->preferred_col;
+	}
+	else {
+		numCharWidths = 0;
+		for (int i = 0; i < cursor->col; i++) {
+			if (state->lines[cursor->line].text[i] == '\t') {
+				numCharWidths += NK_TAB_SIZE;
+			}
+			else {
+				numCharWidths++;
+			}
+		}
+	}
+
+	//Clamp the line movement
+	int newLine = cursor->line + numLines;
+	if (newLine < 0) {
+		newLine = 0;
+	}
+	else if (newLine >= state->lines.len) {
+		newLine = state->lines.len - 1;
+	}
+
+	//Move i to the correct location on the new line
+	int charWidthsLeft = numCharWidths;
+	int i = 0;
+	while (i < state->lines[newLine].text.len && charWidthsLeft > 0) {
+		if (state->lines[newLine].text[i] == '\t') {
+			charWidthsLeft -= NK_TAB_SIZE;
+		}
+		else {
+			charWidthsLeft--;
+		}
+		i++;
+	}
+
+	//Assign i to cursor and clamp
+	cursor->line = newLine;
+	if (charWidthsLeft <= 0) {//It might land in the middle of a tab causing negative values
+		cursor->col = i;
+	}
+	else {
+		cursor->col = state->lines[newLine].text.len;
+
+		//We do not want to set state->preferred_col if there is already
+		//a preferred column that we cannot reach.
+		if (!state->has_preferred_col) {
+			state->has_preferred_col = true;
+			state->preferred_col = numCharWidths;
+		}
+	}
+}
+
 NK_INTERN void
 nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mod,
 	const struct nk_user_font *font, float row_height)
@@ -779,6 +841,7 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 			state->cursor = nk_my_textedit_move_to_word_next(state);
 			state->select_end = state->cursor;
 			nk_my_textedit_clamp(state);
+			state->has_preferred_col = false;
 		}
 		else {
 			if (NK_MY_TEXT_HAS_SELECTION(state))
@@ -787,31 +850,24 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 				state->cursor = nk_my_textedit_move_to_word_next(state);
 				nk_my_textedit_clamp(state);
 			}
+			state->has_preferred_col = false;
 		} break;
 
 	case NK_KEY_DOWN: {
 
 		if (shift_mod) {
 			if (NK_MY_TEXT_HAS_SELECTION(state)) {
-				state->cursor.line++;
+				nk_my_textedit_move_line(state, &state->cursor, 1);
 				state->select_end = state->cursor;
 			}
 			else {
 				state->select_start = state->cursor;
-				state->cursor.line++;
+				nk_my_textedit_move_line(state, &state->cursor, 1);
 				state->select_end = state->cursor;
 			}
 		}
 		else {
-			state->cursor.line++;
-		}
-
-		if (state->has_preferred_col) {
-			state->cursor.col = state->preferred_col;
-		}
-		else {
-			state->has_preferred_col = true;
-			state->preferred_col = state->cursor.col;
+			nk_my_textedit_move_line(state, &state->cursor, 1);
 		}
 
 		nk_my_textedit_clamp(state);
@@ -822,25 +878,17 @@ nk_my_textedit_key(struct nk_my_text_edit *state, enum nk_keys key, int shift_mo
 
 		if (shift_mod) {
 			if (NK_MY_TEXT_HAS_SELECTION(state)) {
-				state->cursor.line--;
+				nk_my_textedit_move_line(state, &state->cursor, -1);
 				state->select_end = state->cursor;
 			}
 			else {
 				state->select_start = state->cursor;
-				state->cursor.line--;
+				nk_my_textedit_move_line(state, &state->cursor, -1);
 				state->select_end = state->cursor;
 			}
 		}
 		else {
-			state->cursor.line--;
-		}
-
-		if (state->has_preferred_col) {
-			state->cursor.col = state->preferred_col;
-		}
-		else {
-			state->has_preferred_col = true;
-			state->preferred_col = state->cursor.col;
+			nk_my_textedit_move_line(state, &state->cursor, -1);
 		}
 
 		nk_my_textedit_clamp(state);
