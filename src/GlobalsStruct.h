@@ -9,6 +9,9 @@
 #include "tinycthread.h"
 #include "MainMenu.h"
 #include "Theme.h"
+#include "LayoutManager.h"
+#include "FileTree.h"
+#include "FindDialog.h"
 
 struct GLFWwindow;
 
@@ -23,5 +26,8 @@ struct Global {
 	Theme theme;
 	nk_color background;
 	Array<SubMenu> menus;
-};
 
+	FileTreeFolder fileTree;
+	View* view;
+	FindDialogCache findCache;
+};

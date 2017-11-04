@@ -1,6 +1,10 @@
 #include "LayoutManager.h"
 #include "TextEditor.h"
 #include "FileTree.h"
+#include "Array.h"
+#include "NuklearAndConfig.h"
+#include "Globals.h"
+#include <limits.h>
 
 #define RESIZE_HANDLE_SIZE 10
 
@@ -37,9 +41,6 @@ struct View {
 		float percentageSplit;
 	};
 };
- 
-
-static View root;
 
 View* createView(LayoutFunc draw, const char* title) {
 	View* view = new View();
@@ -168,7 +169,7 @@ void drawLayoutRecursively(View* view, struct nk_rect totalArea) {
 			}
 
 			struct nk_rect resizeHandle = nk_rect(totalArea.x, totalArea.y + split - RESIZE_HANDLE_SIZE / 2.0f, totalArea.w, RESIZE_HANDLE_SIZE);
-				
+
 			if (nk_input_is_mouse_hovering_rect(input, resizeHandle)) {
 				nk_style_set_cursor(g->ctx, NK_CURSOR_RESIZE_VERTICAL);
 			}

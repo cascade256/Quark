@@ -90,7 +90,7 @@ void arrayInsert(Array<T>* arr, int i, Array<T>* items) {
 	}
 	//Move the data to make room for the inserted data
 	memmove(&arr->data[i + items->len], &arr->data[i], sizeof(T) * (arr->len - i));
-	
+
 	//Insert the new data
 	memcpy(&arr->data[i], items->data, sizeof(T) * items->len);
 	arr->len += items->len;
@@ -152,4 +152,10 @@ void arrayRemoveRange(Array<T>* arr, int start, int end) {
 	arr->len -= (end - start);
 }
 
-
+template <class T>
+void arrayClear(Array<T>* arr) {
+	arr->len = 0;
+	arr->capacity = 1;
+	delete [] arr->data;
+	arr->data = new T[1];
+}

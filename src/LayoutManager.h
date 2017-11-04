@@ -1,8 +1,5 @@
 #pragma once
-#include "Array.h"
-#include "NuklearAndConfig.h"
-#include "Globals.h"
-#include <limits.h>
+
 struct View;
 typedef void(*LayoutFunc)();
 

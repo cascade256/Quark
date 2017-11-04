@@ -92,7 +92,6 @@ void loadPlugins() {
 #error "Unsupported platform!"
 #endif
 
-
 	logI("Plugins path: %s\n", pluginPath);
 
 	char* pluginNameLoc = &pluginPath[strlen(pluginPath)];
