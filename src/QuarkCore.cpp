@@ -59,13 +59,15 @@ void glfwErrorCallback(int error, const char* desc) {
 
 extern "C" {
     bool initQuark(Global* globals) {
+		g = globals;
+
     	initLog(LOG_DEBUG);
     	initJobManager();
 
-    	g = globals;
     	g->colorizers = hashmap_new();
     	g->autocompleters = hashmap_new();
     	g->activeFileIndex = 0;
+		g->findDialogOpen = false;
 
     	arrayInit(&g->menus);
     	addMenuItem(addMenu("File"), "Open", NULL);
