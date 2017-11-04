@@ -1,6 +1,5 @@
 #include "TextEditor.h"
-
-static bool findDialogOpen = false;
+#include "Globals.h"
 
 void drawTextEditor(nk_context* ctx, OpenFiles* files) {
 
@@ -93,8 +92,8 @@ void drawTextEditor(nk_context* ctx, OpenFiles* files) {
 				}
 
 				//Draw the find dialog
-				if (findDialogOpen) {
-					findDialogOpen = drawFindDialog(f, nk_vec2(region.w - 200, tabHeight));
+				if (g->findDialogOpen) {
+					g->findDialogOpen = drawFindDialog(f, nk_vec2(region.w - 200, tabHeight));
 				}
 
 
@@ -127,5 +126,5 @@ void saveActiveFile(OpenFiles* files) {
 }
 
 void showSearchDialog() {
-	findDialogOpen = true;
+	g->findDialogOpen = true;
 }

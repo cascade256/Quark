@@ -12,6 +12,7 @@
 #include "LayoutManager.h"
 #include "FileTree.h"
 #include "FindDialog.h"
+#include "Logger.h"
 
 struct GLFWwindow;
 
@@ -26,8 +27,9 @@ struct Global {
 	Theme theme;
 	nk_color background;
 	Array<SubMenu> menus;
-
 	FileTreeFolder fileTree;
 	View* view;
 	FindDialogCache findCache;
+	LoggerData logData;
+	bool findDialogOpen;
 };

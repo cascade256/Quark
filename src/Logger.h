@@ -6,6 +6,16 @@
 #include <cstring>
 #include <cstdarg>
 
+#define MAX_LOG_LEN 1024
+
+struct LoggerData {
+    mtx_t logMutex;
+    LogLevel logLevel;
+    char* buffer;
+    int bufferLen;
+    int bufferIdx;
+};
+
 void initLog(LogLevel level);
 void flushLog();
 
