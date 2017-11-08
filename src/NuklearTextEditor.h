@@ -66,6 +66,13 @@ nk_my_textedit_text(struct nk_my_text_edit* state, const char* text, int total_l
 
 NK_API TextCursor
 text_cursor(int line, int col);
+
+NK_API int
+nk_my_bytes_to_glyph(TextLine* line, int cursor);
+
+NK_API int
+nk_my_textedit_paste(struct nk_my_text_edit *state, char const *ctext, int len);
+
 /*-----------------------------------------------------------------
 *
 *						My Text Editor
@@ -332,7 +339,7 @@ nk_my_textedit_redo(struct nk_my_text_edit *state)
 }
 #endif
 
-NK_INTERN int
+NK_API int
 nk_my_bytes_to_glyph(TextLine* line, int cursor) {
 	int glyph_len;
 	nk_rune unicode;

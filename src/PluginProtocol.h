@@ -1,11 +1,6 @@
 #pragma once
 #include "Array.h"
-
-#ifdef _WIN32
-    #define EXPORT __declspec(dllexport)
-#elif __linux__
-    #define EXPORT 
-#endif
+#include "Defines.h"
 
 enum LogLevel {
 	LOG_DEBUG,
@@ -73,7 +68,6 @@ struct PluginAttachment {
 };
 
 struct Global;
-typedef void(*Func)();
 
 typedef void(*RegisterColorizerFunc)(Colorize_Func, const char* fileExtension);
 typedef void(*RegisterAutocompleterFunc)(AutoComplete_Func, const char* fileExtension);

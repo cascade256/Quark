@@ -1,10 +1,3 @@
-#ifdef _WIN32
-#include "dirent.h"
-#else
-#include <dirent.h>
-#include <unistd.h>
-#endif
-
 #include <stdio.h>
 #include <string>
 #include "gl3w.h"
@@ -24,6 +17,7 @@
 #include "Logger.h"
 #include "LayoutManager.h"
 #include "Array.h"
+#include "Defines.h"
 
 Global* g;
 
@@ -58,7 +52,7 @@ void glfwErrorCallback(int error, const char* desc) {
 }
 
 extern "C" {
-    bool initQuark(Global* globals) {
+    EXPORT bool initQuark(Global* globals) {
 		g = globals;
 
     	initLog(LOG_DEBUG);
@@ -71,6 +65,7 @@ extern "C" {
 
     	arrayInit(&g->menus);
     	addMenuItem(addMenu("File"), "Open", NULL);
+		addMenuItem(addMenu("Quark"), "Reload", g->reloadQuarkCore);
 
     	loadPlugins();
 
@@ -120,7 +115,7 @@ extern "C" {
     	return true;
     }
 
-    bool updateQuark(Global* globals) {
+    EXPORT bool updateQuark(Global* globals) {
         g = globals;
         flushLog();
         glfwPollEvents();
@@ -142,7 +137,7 @@ extern "C" {
         return !glfwWindowShouldClose(g->win);
     }
 
-    bool shutdownQuark(Global* globals) {
+    EXPORT bool shutdownQuark(Global* globals) {
         g = globals;
         destroyTheme();
     	destroyFileTree(&g->fileTree);

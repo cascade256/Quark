@@ -13,6 +13,7 @@
 #include "FileTree.h"
 #include "FindDialog.h"
 #include "Logger.h"
+#include "nuklear\nuklear_glfw_gl3.h"
 
 struct GLFWwindow;
 
@@ -32,4 +33,5 @@ struct Global {
 	FindDialogCache findCache;
 	LoggerData logData;
 	bool findDialogOpen;
+	nk_glfw glfw;
 };
