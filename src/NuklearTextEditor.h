@@ -1048,7 +1048,7 @@ nk_my_textedit_clear_state(struct nk_my_text_edit *state)
 	state->preferred_col = 0;
 	state->cursor_at_end_of_line = 0;
 	state->initialized = 1;
-	state->mode = NK_TEXT_EDIT_MODE_VIEW;
+	state->mode = NK_TEXT_EDIT_MODE_INSERT;
 	state->scrollbar = nk_vec2(0, 0);
 }
 

@@ -1,6 +1,10 @@
 #include "../gl3w.h"
+
+#ifdef _WIN32
 //We cannot use EXPORT from Defines.h here becuase Nuklear is already extern "C"
 #define NK_API __declspec(dllexport)
+#endif
+
 #define NK_IMPLEMENTATION
 #include "../NuklearAndConfig.h"
 #include "../NuklearTextEditor.h"

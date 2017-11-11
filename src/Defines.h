@@ -4,7 +4,7 @@
 #ifdef _WIN32
 #define EXPORT extern "C" __declspec(dllexport)
 #elif __linux__
-#define EXPORT 
+#define EXPORT extern "C"
 #endif
 
 //Simple function types

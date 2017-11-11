@@ -48,10 +48,6 @@ bool loadPlugin(const char* path, Plugin* plugin) {
 		return false;
 	}
 
-	plugin->getPluginInfo = (type_getPluginInfo)dlsym(dll, "getPluginInfo");
-	if (plugin->getPluginInfo == NULL) {
-		return false;
-	}
 	plugin->initPlugin = (type_initPlugin)dlsym(dll, "initPlugin");
 	if (plugin->initPlugin == NULL) {
 		return false;

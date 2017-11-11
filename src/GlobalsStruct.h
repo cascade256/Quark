@@ -13,7 +13,7 @@
 #include "FileTree.h"
 #include "FindDialog.h"
 #include "Logger.h"
-#include "nuklear\nuklear_glfw_gl3.h"
+#include "nuklear/nuklear_glfw_gl3.h"
 
 struct GLFWwindow;
 
