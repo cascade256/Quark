@@ -1,16 +1,9 @@
 #pragma once
-#ifdef _WIN32
-#include <Windows.h>
-#include "dirent.h"
-#else
-#include <dirent.h>
-#include <unistd.h>
-#include <dlfcn.h>
-#endif
-#include <stdio.h>
-#include "PluginProtocol.h"
-#include "Globals.h"
-#include <vector>
+#include "AutocompleteDialog.h"
+#include "Array.h"
+
+typedef void(*Colorize_Func)(Array<TextLine>* buffer, int editedLine);
+typedef void(*AutoComplete_Func)(AutoCompleteData* data, Array<TextLine>* buffer);
 
 void loadPlugins();
 void destroyPlugins();

@@ -27,7 +27,7 @@ struct Global {
 	map_t autocompleters;
 	Theme theme;
 	nk_color background;
-	Array<SubMenu> menus;
+	Array<Func> menubarCBs;
 	FileTreeFolder fileTree;
 	View* view;
 	FindDialogCache findCache;

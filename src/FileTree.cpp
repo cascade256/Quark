@@ -154,7 +154,7 @@ void drawFileTree(nk_context* ctx, FileTreeFolder* tree, OpenFiles* openFiles) {
 			if (nk_input_mouse_clicked(&ctx->input, NK_BUTTON_DOUBLE, bounds))
 			{
 				logI("File: %s was double clicked\n", tree->files[i].name);
-				addJob(jobbedOpenFile, (void*)tree->files[i].path);
+				addJobWithArgs(jobbedOpenFile, (void*)tree->files[i].path);
 			}
 		}
 		nk_tree_pop(ctx);

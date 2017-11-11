@@ -1,21 +1,27 @@
 #include "PluginManager.h"
+#include "Globals.h"
+#ifdef _WIN32
+#include <Windows.h>
+#include "dirent.h"
+#else
+#include <dirent.h>
+#include <unistd.h>
+#include <dlfcn.h>
+#endif
+#include <stdio.h>
 
 #define MAX_EXTENSION_LENGTH 12
 
-Plugin_API api;
-std::vector<Plugin>* plugins;
+typedef void(*type_initPlugin)(Global*);
+typedef void(*type_destroyPlugin)(void);
 
-void registerColorizer(Colorize_Func func, const char* fileExt) {
-	hashmap_put(g->colorizers, fileExt, (void*)func);
-}
+struct Plugin {
+	type_initPlugin initPlugin;
+	type_destroyPlugin destroyPlugin;
+};
 
-void registerAutocompleter(AutoComplete_Func func, const char* fileExt) {
-	hashmap_put(g->autocompleters, fileExt, (void*)func);
-}
 
-Global* getGlobals() {
-	return g;
-}
+static Array<Plugin> plugins;
 
 bool loadPlugin(const char* path, Plugin* plugin) {
 	logI("Loading plugin: %s\n", path);
@@ -27,10 +33,6 @@ bool loadPlugin(const char* path, Plugin* plugin) {
 		return false;
 	}
 
-	plugin->getPluginInfo = (type_getPluginInfo)GetProcAddress(dll, "getPluginInfo");
-	if (plugin->getPluginInfo == NULL) {
-		return false;
-	}
 	plugin->initPlugin = (type_initPlugin)GetProcAddress(dll, "initPlugin");
 	if (plugin->initPlugin == NULL) {
 		return false;
@@ -64,18 +66,11 @@ bool loadPlugin(const char* path, Plugin* plugin) {
 }
 
 void setupPlugin(Plugin plugin) {
-	plugin.initPlugin(api);
+	plugin.initPlugin(g);
 }
 
 void loadPlugins() {
-	plugins = new std::vector<Plugin>();
-	api.registerColorizer = registerColorizer;
-	api.registerAutocompleter = registerAutocompleter;
-	api.getGlobalData = getGlobals;
-	api.registerMenu = addMenu;
-	api.registerMenuItem = addMenuItem;
-	api.logFunc = logFormat;
-
+	arrayInit(&plugins);
 
 	char* pluginPath = new char[1024];
 
@@ -118,7 +113,7 @@ void loadPlugins() {
 			strncpy(pluginNameLoc, ent->d_name, maxPluginNameLen);
 
 			if (loadPlugin(pluginPath, &plugin)) {
-				plugins->push_back(plugin);
+				arrayAdd(&plugins, plugin);
 				setupPlugin(plugin);
 			}
 			else {
@@ -133,8 +128,8 @@ void loadPlugins() {
 }
 
 void destroyPlugins() {
-	for (int i = 0; i < plugins->size(); i++) {
-		(*plugins)[i].destroyPlugin(api);
+	for (int i = 0; i < plugins.len; i++) {
+		plugins[i].destroyPlugin();
 	}
-	delete plugins;
+	delete [] plugins.data;
 }

@@ -21,17 +21,6 @@ elseif(WIN32)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-#Build Quark
-project (Quark C CXX)
-set(CMAKE_CXX_STANDARD 11)
-add_executable(Quark src/main.cpp)
-if(UNIX)
-    find_package(Threads REQUIRED)
-    find_package(glfw3 REQUIRED)
-    target_link_libraries(Quark ${CMAKE_DL_LIBS})
-elseif(WIN32)
-	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Quark)
-endif()
 #Build QuarkCore
 project (QuarkCore C CXX)
 
@@ -47,7 +36,6 @@ add_library(QuarkCore SHARED
 		src/JobManager.cpp
 		src/LayoutManager.cpp
 		src/Logger.cpp
-		src/MainMenu.cpp
 		src/OpenFileManager.cpp
 		src/ParsingUtils.cpp
 		src/PluginManager.cpp
@@ -81,6 +69,15 @@ elseif(WIN32)
 	)
 endif()
 
+#Build Quark
+project (Quark C CXX)
+set(CMAKE_CXX_STANDARD 11)
+add_executable(Quark src/main.cpp)
+target_link_libraries(Quark QuarkCore)
+if(WIN32)
+	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Quark)
+endif()
+
 #Build C/C++ Plugin
 project (CPP_Plugin C CXX)
 add_library(CPP_Plugin SHARED
@@ -89,6 +86,7 @@ add_library(CPP_Plugin SHARED
 		src/ParsingUtils.cpp
 		src/parson.cpp
 )
+target_link_libraries(CPP_Plugin QuarkCore)
 add_custom_command(TARGET CPP_Plugin POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:CPP_Plugin> $<TARGET_FILE_DIR:Quark>/plugins)
 add_custom_command(TARGET CPP_Plugin POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:CPP_Plugin>)
 
@@ -98,6 +96,7 @@ add_library(Python_Plugin SHARED
 		src/python_plugin/PythonPlugin.cpp
 		src/ParsingUtils.cpp
 )
+target_link_libraries(Python_Plugin QuarkCore)
 add_custom_command(TARGET Python_Plugin POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:Python_Plugin> $<TARGET_FILE_DIR:Quark>/plugins)
 add_custom_command(TARGET Python_Plugin POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:Python_Plugin>)
 

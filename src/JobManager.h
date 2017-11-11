@@ -2,17 +2,15 @@
 #include "tinycthread.h"
 #include <stdio.h>
 #include "Logger.h"
+#include "Defines.h"
 
 #ifdef __linux__ 
 #include <unistd.h>
 #endif
 
-typedef void(*JobFunc)(void*);
-
-struct Job {
-	JobFunc func;
-	void* data;
-};
-
 void initJobManager();
-void addJob(JobFunc func, void* arg);
+
+extern "C" {
+	EXPORT void addJobWithArgs(FuncWithArgs func, void* args);
+	EXPORT void addJob(Func func);
+}

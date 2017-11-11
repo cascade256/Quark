@@ -14,7 +14,7 @@
 #define NK_GLFW_GL3_H_
 
 #include <GLFW/glfw3.h>
-
+#include "../NuklearAndConfig.h"
 #ifndef NK_GLFW_TEXT_MAX
 #define NK_GLFW_TEXT_MAX 256
 #endif

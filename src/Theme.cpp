@@ -1,5 +1,5 @@
-#include "Globals.h"
 #include "Theme.h"
+#include "Globals.h"
 
 void setupTheme() {
 	//Setup fonts

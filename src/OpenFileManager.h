@@ -3,8 +3,8 @@
 #include <string>
 #include <cassert>
 #include "NuklearAndConfig.h"
-#include "PluginProtocol.h"
 #include "Array.h"
+#include "NuklearTextEditor.h"
 
 struct MyOpenFile {
 	char* path;

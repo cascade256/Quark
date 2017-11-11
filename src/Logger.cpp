@@ -12,7 +12,7 @@ void initLog(LogLevel level) {
 	g->logData.logLevel = level;
 }
 
-void logFormat(const char* file, int line, LogLevel level, const char* formatStr, ...) {
+EXPORT void logFormat(const char* file, int line, LogLevel level, const char* formatStr, ...) {
 	if (level < g->logData.logLevel) {
 		return;
 	}

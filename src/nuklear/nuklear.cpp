@@ -1,9 +1,13 @@
 #include "../gl3w.h"
-
+//We cannot use EXPORT from Defines.h here becuase Nuklear is already extern "C"
+#define NK_API __declspec(dllexport)
 #define NK_IMPLEMENTATION
 #include "../NuklearAndConfig.h"
+#include "../NuklearTextEditor.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "../stb_image.h"
+
+#undef NK_IMPLEMENTATION
 
 #include "nuklear_glfw_gl3.h"
 #include "../Globals.h"

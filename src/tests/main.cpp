@@ -3,6 +3,7 @@
 
 #define NK_IMPLEMENTATION
 #include "../NuklearAndConfig.h"
+#include "../NuklearTextEditor.h"
 #include "texteditor.cpp"
 #include "array.cpp"
 

@@ -1,4 +1,5 @@
 #include "AutocompleteDialog.h"
+#include "Globals.h"
 
 void drawAutocompleteDialog(struct nk_vec2 pos, AutoCompleteData* data, bool* active) {
 	nk_style* style = &g->ctx->style;

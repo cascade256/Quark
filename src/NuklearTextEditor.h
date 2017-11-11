@@ -1,10 +1,27 @@
 #pragma once
-#include "PluginProtocol.h"
+#include "AutocompleteDialog.h"
+#include "PluginManager.h"
 #include "nuklear/nuklear.h"
 #include <stdio.h>
 #include <string.h>
 #include "Array.h"
 #include <cmath>
+
+enum Token_Type {//The underscore is needed due to a name conflict with a Windows type
+	TOK_DEFAULT,
+	TOK_COMMENT,
+	TOK_IDENTIFIER,
+	TOK_RESERVED,
+	TOK_NUMBER,
+	TOK_STRING,
+	TOK_COUNT
+};
+
+struct TextLine {
+	Array<char> text;
+	Array<char> colors;//One color per glyph, each glyph could require multiple bytes
+};
+
 struct TextCursor {
 	int line;
 	int col;
@@ -39,11 +56,13 @@ struct nk_my_text_edit {
 	struct nk_text_undo_state undo;
 
 	nk_color* colorTable;
-	Colorize_Func colorize = NULL;
+	Colorize_Func colorize;
+	//void(*colorize)(Array<TextLine>* buffer, int editedLine);
 
-	bool cursorMoved = false;
+	bool cursorMoved;
 
-	AutoComplete_Func autocomplete = NULL;
+	AutoComplete_Func autocomplete;
+	//void(*autocomplete)(AutoCompleteData* data, Array<TextLine>* buffer);
 	AutoCompleteData* acData;
 	bool acActive;
 
@@ -99,6 +118,9 @@ nk_init_my_text_edit(struct nk_my_text_edit* edit, nk_color* colors, int numLine
 	edit->colorTable = colors;
 	edit->lineNumBuffLen = floor(log10(abs(numLines))) + 1;//Calculate the number of digits in the number of lines
 	edit->lineNumberBuffer = new char[edit->lineNumBuffLen];
+	edit->autocomplete = NULL;
+	edit->colorize = NULL;
+	edit->cursorMoved = false;
 }
 
 NK_API TextCursor

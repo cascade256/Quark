@@ -27,7 +27,7 @@ typedef struct _hashmap_map {
 /*
 * Return an empty hashmap, or NULL on failure.
 */
-map_t hashmap_new() {
+EXPORT map_t hashmap_new() {
 	hashmap_map* m = (hashmap_map*)malloc(sizeof(hashmap_map));
 	if (!m) goto err;
 
@@ -217,7 +217,7 @@ int hashmap_hash(map_t in, const char* key) {
 /*
 * Doubles the size of the hashmap, and rehashes all the elements
 */
-int hashmap_rehash(map_t in) {
+EXPORT int hashmap_rehash(map_t in) {
 	int i;
 	int old_size;
 	hashmap_element* curr;
@@ -257,7 +257,7 @@ int hashmap_rehash(map_t in) {
 /*
 * Add a pointer to the hashmap with some key
 */
-int hashmap_put(map_t in, const char* key, any_t value) {
+EXPORT int hashmap_put(map_t in, const char* key, any_t value) {
 	int index;
 	hashmap_map* m;
 
@@ -287,7 +287,7 @@ int hashmap_put(map_t in, const char* key, any_t value) {
 /*
 * Get your pointer out of the hashmap with a key
 */
-int hashmap_get(map_t in, const char* key, any_t *arg) {
+EXPORT int hashmap_get(map_t in, const char* key, any_t *arg) {
 	int curr;
 	int i;
 	hashmap_map* m;
@@ -323,7 +323,7 @@ int hashmap_get(map_t in, const char* key, any_t *arg) {
 * additional any_t argument is passed to the function as its first
 * argument and the hashmap element is the second.
 */
-int hashmap_iterate(map_t in, PFany f, any_t item) {
+EXPORT int hashmap_iterate(map_t in, PFany f, any_t item) {
 	int i;
 
 	/* Cast the hashmap */
@@ -349,7 +349,7 @@ int hashmap_iterate(map_t in, PFany f, any_t item) {
 /*
 * Remove an element with that key from the map
 */
-int hashmap_remove(map_t in, char* key) {
+EXPORT int hashmap_remove(map_t in, const char* key) {
 	int i;
 	int curr;
 	hashmap_map* m;
@@ -384,14 +384,14 @@ int hashmap_remove(map_t in, char* key) {
 }
 
 /* Deallocate the hashmap */
-void hashmap_free(map_t in) {
+EXPORT void hashmap_free(map_t in) {
 	hashmap_map* m = (hashmap_map*)in;
 	free(m->data);
 	free(m);
 }
 
 /* Return the length of the hashmap */
-int hashmap_length(map_t in) {
+EXPORT int hashmap_length(map_t in) {
 	hashmap_map* m = (hashmap_map *)in;
 	if (m != NULL) return m->size;
 	else return 0;

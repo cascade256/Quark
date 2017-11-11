@@ -6,13 +6,19 @@ static thrd_t* threads;
 static int numThreads;
 
 //An item in a linked list of jobs
-struct JobItem {
-	void* data;
-	void(*func)(void*);
-	JobItem* next;
+struct Job {
+	bool hasArgs;
+	union {
+		struct {
+			FuncWithArgs funcWithArgs;
+			void* args;
+		};
+		Func func;
+	};
+	Job* next;
 };
 
-static JobItem* jobs;
+static Job* jobs;
 static cnd_t jobsAvailableCND;
 static mtx_t jobsListMutex;
 static mtx_t m;
@@ -33,7 +39,7 @@ int launchFunc(void* i) {
 	mtx_t tssMutex;
 	mtx_init(&tssMutex, mtx_plain);
 	while (true) {
-		JobItem* job;
+		Job* job;
 		bool jobsAvailable;
 		mtx_lock(&jobsListMutex);
 		jobsAvailable = (jobs != NULL);
@@ -48,7 +54,12 @@ int launchFunc(void* i) {
 			mtx_unlock(&jobsListMutex);
 			cnd_broadcast(&jobsAvailableCND);
 			logD("Took job(%i)\n", i);
-			job->func(job->data);
+			if (job->hasArgs) {
+				job->funcWithArgs(job->args);
+			}
+			else {
+				job->func();
+			}
 			delete job;
 			logD("Finished job(%i)\n", i);
 		}
@@ -65,7 +76,7 @@ void initJobManager() {
 	mtx_init(&m, mtx_plain);
 	mtx_init(&jobsListMutex, mtx_plain);
 
-	numThreads = getNumCores() - 1;//Count the starting thread
+	numThreads = getNumCores() - 1;//Leave one core for just the GUI
 	threads = new thrd_t[numThreads];
 
 	logI("NumThreads: %i\n", numThreads);
@@ -77,23 +88,18 @@ void initJobManager() {
 	jobs = NULL;
 }
 
-void addJob(JobFunc func, void* arg) {
-	JobItem* item = new JobItem();
-	item->func = func;
-	item->data = arg;
-	item->next = NULL;
-
+void insertJobIntoList(Job* job) {
 	mtx_lock(&jobsListMutex);
 
 	if (jobs == NULL) {
-		jobs = item;
+		jobs = job;
 	}
 	else {
-		JobItem* curr = jobs;
+		Job* curr = jobs;
 		while (curr->next != NULL) {
 			curr = curr->next;
 		}
-		curr->next = item;
+		curr->next = job;
 	}
 
 	mtx_unlock(&jobsListMutex);
@@ -101,3 +107,20 @@ void addJob(JobFunc func, void* arg) {
 	cnd_broadcast(&jobsAvailableCND);
 }
 
+EXPORT void addJobWithArgs(FuncWithArgs func, void* args) {
+	Job* job = new Job();
+	job->hasArgs = true;
+	job->funcWithArgs = func;
+	job->args = args;
+	job->next = NULL;
+	insertJobIntoList(job);
+}
+
+EXPORT void addJob(Func func) {
+	Job* job = new Job();
+	job->hasArgs = false;
+	job->func = func;
+	job->next = NULL;
+
+	insertJobIntoList(job);
+}
