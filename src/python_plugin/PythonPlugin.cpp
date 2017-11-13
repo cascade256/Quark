@@ -1,9 +1,9 @@
 #include "../GlobalsStruct.h"
 #include "../ParsingUtils.h"
+#include "../QuarkCore.h"
 #include "keywords.h"
 #include <cstring>
 #include <stdlib.h>
-#include "../PluginProtocol.h"
 
 Global* g;
 
@@ -118,7 +118,7 @@ void colorize(Array<TextLine>* lines, int editedLine) {
 }
 
 void drawMenu() {
-	if (nk_menu_begin_label(g->ctx, "Python", NK_TEXT_LEFT, nk_vec2i(120, 200))) {
+	if (menuItemBegin("Python", 100)) {
 		nk_layout_row_dynamic(g->ctx, 25, 1);
 
 		if (nk_menu_item_label(g->ctx, "Run", NK_TEXT_LEFT)) {

@@ -1,4 +1,3 @@
-#include "../PluginProtocol.h"
 #include <string.h>
 #include <stdio.h>
 #include "keywords.h"
@@ -9,6 +8,7 @@
 #include "CPP_Plugin.h"
 #include <stdlib.h>
 #include "../GlobalsStruct.h"
+#include "../QuarkCore.h"
 
 Project project;
 Global* g;
@@ -192,7 +192,7 @@ void run() {
 }
 
 void drawMenu() {
-	if (nk_menu_begin_label(g->ctx, "C/C++", NK_TEXT_LEFT, nk_vec2i(120, 200))) {
+	if (menuItemBegin("C/C++", 0)) {
 		nk_layout_row_dynamic(g->ctx, 25, 1);
 
 		if (nk_menu_item_label(g->ctx, "Run", NK_TEXT_LEFT)) {

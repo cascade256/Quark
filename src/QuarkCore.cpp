@@ -45,6 +45,16 @@ void drawTextEditor() {
 	drawTextEditor(g->ctx, &g->files);
 }
 
+EXPORT bool menuItemBegin(const char* text, float minWidth) {
+	float width = g->ctx->style.font->width(g->ctx->style.font->userdata, g->ctx->style.font->height, text, strlen(text));
+	width += 15;
+	if (width < minWidth) {
+		width = minWidth;
+	}
+	nk_layout_row_push(g->ctx, width);
+	return nk_menu_begin_label(g->ctx, text, NK_TEXT_LEFT, nk_vec2i(300, g->ctx->current->bounds.h));
+}
+
 void glfwErrorCallback(int error, const char* desc) {
 	logE("GLFW Error: %i, %s\n", error, desc);
 }
@@ -121,12 +131,13 @@ bool update() {
 
 	//Draw main menu
 	{
-		int menuBarHeight = 25;
+		int menuBarHeight = g->ctx->style.font->height + g->ctx->style.menu_button.padding.y;
 		nk_menubar_begin(g->ctx);
-		nk_layout_row_dynamic(g->ctx, menuBarHeight, g->menubarCBs.len);
+		nk_layout_row_begin(g->ctx, NK_STATIC, menuBarHeight, g->menubarCBs.len);
 		for (int i = 0; i < g->menubarCBs.len; i++) {
 			g->menubarCBs[i]();
 		}
+		nk_layout_row_end(g->ctx);
 		nk_menubar_end(g->ctx);
 	}
 	drawLayout(g->view, width, height);
