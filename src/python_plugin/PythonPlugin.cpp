@@ -36,7 +36,7 @@ void run() {
 	}
 
 	const char* scriptTemplate = "python %s; read -p \"Press any key to exit\" -n1; echo; rm -- \"$0\"";
-	int res = dprintf(file, scriptTemplate, "test.py");
+	int res = dprintf(file, scriptTemplate, path);
 
 	if (res < 1) {
 		logE("Failed to write to the temp script, cannot launch python!\n");
@@ -138,4 +138,5 @@ EXPORT void initPlugin(Global* globals) {
 EXPORT void destroyPlugin() {
 
 }
+
 
