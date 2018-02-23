@@ -159,3 +159,10 @@ void arrayClear(Array<T>* arr) {
 	delete [] arr->data;
 	arr->data = new T[1];
 }
+
+template <class T>
+T arrayPop(Array<T>* arr) {
+	assert(arr->len > 0);
+	arr->len--;
+	return arr->data[arr->len];
+}

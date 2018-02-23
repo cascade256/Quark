@@ -220,10 +220,13 @@ nk_glfw3_render(enum nk_anti_aliasing AA, int max_vertex_buffer, int max_element
 			config.line_AA = AA;
 
 			/* setup buffers to load vertices and elements */
-			{struct nk_buffer vbuf, ebuf;
-			nk_buffer_init_fixed(&vbuf, vertices, (size_t)max_vertex_buffer);
-			nk_buffer_init_fixed(&ebuf, elements, (size_t)max_element_buffer);
-			nk_convert(&g->glfw.ctx, &dev->cmds, &vbuf, &ebuf, &config); }
+			{
+				struct nk_buffer vbuf, ebuf;
+				nk_buffer_init_fixed(&vbuf, vertices, (size_t)max_vertex_buffer);
+				nk_buffer_init_fixed(&ebuf, elements, (size_t)max_element_buffer);
+				nk_convert(&g->glfw.ctx, &dev->cmds, &vbuf, &ebuf, &config); 
+				offset = NULL;
+			}
 		}
 		glUnmapBuffer(GL_ARRAY_BUFFER);
 		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);

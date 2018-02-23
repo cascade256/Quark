@@ -148,6 +148,14 @@ bool update() {
 	glClearColor(0.5f, 0.5f, 0.5f, 1);
 	nk_glfw3_render(NK_ANTI_ALIASING_ON, 512 * 1024, 128 * 1024);
 	glfwSwapBuffers(g->win);
+
+	GLenum error = glGetError();
+	while (error != 0) {
+		logW("OpenGL error: %x\n", error);
+		error = glGetError();
+		
+	}
+
 	return !glfwWindowShouldClose(g->win);
 }
 

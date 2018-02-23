@@ -29,7 +29,8 @@ bool loadPlugin(const char* path, Plugin* plugin) {
 #ifdef _WIN32
 	HINSTANCE dll = LoadLibrary(path);
 	if (!dll) {
-		logW("Failed to load the plugin\n");
+		int error = GetLastError();
+		logW("Failed to load the plugin. Error: %i\n", error);
 		return false;
 	}
 
