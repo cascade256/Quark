@@ -13,7 +13,7 @@ Do not open important files with it, and backup files often.
   * Python plugin
 * Multithreaded job system to keep the UI quick and responsive
 * A find function 
-#### On the roadmap:
+#### To be done:
 * Autocompletion
 * Settings
 	* Themes
@@ -30,7 +30,7 @@ Do not open important files with it, and backup files often.
 
 ## Building
 
-Quark uses CMake as it's build system. To build, simply run CMake to configure and run make or Visual Studio. 
+Quark uses CMake as its build system. To build, simply run CMake to configure and run make or Visual Studio. 
 
 
 ## Resources used
